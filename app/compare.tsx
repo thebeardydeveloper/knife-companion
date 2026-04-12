@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: 2,
     borderBottomColor: colors.accent,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.lg,
   },
   steelName: {
     color: colors.textPrimary,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   labelCol: {
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     borderRightWidth: 1,
     borderRightColor: colors.border,
   },
@@ -256,8 +256,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
     borderRightWidth: 1,
     borderRightColor: colors.border,
   },
