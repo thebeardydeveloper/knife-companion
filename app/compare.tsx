@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet, Pressable, ActivityIndicator, Dimensions } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable, ActivityIndicator, Dimensions, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -199,7 +199,7 @@ export default function CompareScreen() {
           <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
         </Pressable>
         <H1 style={styles.headerTitle}>{t('compare.title')}</H1>
-        {!isLoading && steels.length >= 2 && (
+        {!isLoading && steels.length >= 2 && Platform.OS !== 'web' && (
           <Pressable
             onPress={handleShare}
             disabled={sharing}
@@ -234,8 +234,8 @@ export default function CompareScreen() {
             />
           </ScrollView>
 
-          {/* Tarjeta off-screen para exportar — posicionada fuera de pantalla */}
-          <View
+          {/* Tarjeta off-screen para exportar — solo en nativo */}
+          {Platform.OS !== 'web' && <View
             style={[styles.shareCardOuter, { left: screenWidth + 100 }]}
             pointerEvents="none"
           >
@@ -260,7 +260,7 @@ export default function CompareScreen() {
                 <Caption style={shareCardStyles.footerText}>knifecompanion</Caption>
               </View>
             </View>
-          </View>
+          </View>}
         </>
       )}
     </View>

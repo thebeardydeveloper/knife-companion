@@ -1,12 +1,11 @@
 import { useMemo, useState, useEffect } from 'react';
 import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Searchbar } from 'react-native-paper';
-import { FilterChips, H2, Body, Label } from '../src/components/ui';
+import { FilterChips, H2, Body, Label, UniversalList } from '../src/components/ui';
 import { SteelListItem } from '../src/components/steel/SteelListItem';
 import { useSteels } from '../src/hooks/useSteels';
 import { useAppStore } from '../src/store/useAppStore';
@@ -167,7 +166,7 @@ export default function SteelsScreen() {
           <Body style={styles.errorText}>{t('common.noResults')}</Body>
         </View>
       ) : (
-        <FlashList
+        <UniversalList
           data={filtered}
           keyExtractor={(item: SteelSummary) => item.id}
           renderItem={({ item }: { item: SteelSummary }) => (

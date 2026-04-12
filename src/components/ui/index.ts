@@ -4,3 +4,4 @@ export { Badge } from './Badge';
 export { SearchBar } from './SearchBar';
 export { FilterChips } from './FilterChips';
 export { PropertyBar } from './PropertyBar';
+export { UniversalList } from './UniversalList';

@@ -1,15 +1,30 @@
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
+import { Platform, View, StyleSheet } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { paperTheme } from '../src/theme';
+import { paperTheme, colors } from '../src/theme';
 import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
+
+const webStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.bg,
+    alignItems: 'center',
+  },
+  inner: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 480,
+    overflow: 'hidden',
+  },
+});
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -55,6 +70,16 @@ export default function RootLayout() {
 
   if (!ready) return null;
 
+  const stack = (
+    <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+      <Stack.Screen name="index" options={{ animation: 'fade' }} />
+      <Stack.Screen name="steels" />
+      <Stack.Screen name="steel/[id]" />
+      <Stack.Screen name="compare" />
+      <Stack.Screen name="settings" options={{ animation: 'slide_from_bottom' }} />
+    </Stack>
+  );
+
   return (
     <SafeAreaProvider>
       <PersistQueryClientProvider
@@ -62,13 +87,11 @@ export default function RootLayout() {
         persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 * 7 }}
       >
         <PaperProvider theme={paperTheme}>
-          <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-            <Stack.Screen name="index" options={{ animation: 'fade' }} />
-            <Stack.Screen name="steels" />
-            <Stack.Screen name="steel/[id]" />
-            <Stack.Screen name="compare" />
-            <Stack.Screen name="settings" options={{ animation: 'slide_from_bottom' }} />
-          </Stack>
+          {Platform.OS === 'web' ? (
+            <View style={webStyles.container}>
+              <View style={webStyles.inner}>{stack}</View>
+            </View>
+          ) : stack}
         </PaperProvider>
       </PersistQueryClientProvider>
     </SafeAreaProvider>
