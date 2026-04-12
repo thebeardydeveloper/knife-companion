@@ -51,15 +51,20 @@ export default function SteelsScreen() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      {/* Header row: back + search + settings */}
-      <View style={styles.headerRow}>
-        <Pressable
-          onPress={() => router.back()}
-          style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.6 }]}
-          hitSlop={12}
-        >
-          <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
-        </Pressable>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.6 }]}
+            hitSlop={12}
+          >
+            <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+          </Pressable>
+          <H2 style={styles.title}>{t('home.sections.encyclopedia')}</H2>
+          {/* Spacer para centrar el título visualmente */}
+          <View style={styles.iconBtn} />
+        </View>
 
         <Searchbar
           value={search}
@@ -123,15 +128,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    gap: spacing.xs,
+  header: {
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    paddingBottom: spacing.sm,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  title: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.textPrimary,
   },
   iconBtn: {
     width: 36,
@@ -140,7 +153,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   searchbar: {
-    flex: 1,
+    marginHorizontal: spacing.sm,
     backgroundColor: colors.bg,
     borderWidth: 1,
     borderColor: colors.border,

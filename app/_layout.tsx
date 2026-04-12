@@ -62,11 +62,11 @@ export default function RootLayout() {
         persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 * 7 }}
       >
         <PaperProvider theme={paperTheme}>
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="steels" options={{ headerShown: false }} />
-            <Stack.Screen name="steel/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="settings" options={{ headerShown: false }} />
+          <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+            <Stack.Screen name="index" options={{ animation: 'fade' }} />
+            <Stack.Screen name="steels" />
+            <Stack.Screen name="steel/[id]" />
+            <Stack.Screen name="settings" options={{ animation: 'slide_from_bottom' }} />
           </Stack>
         </PaperProvider>
       </PersistQueryClientProvider>
