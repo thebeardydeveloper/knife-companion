@@ -203,12 +203,11 @@ export default function CompareScreen() {
           <Pressable
             onPress={handleShare}
             disabled={sharing}
-            style={({ pressed }) => [styles.iconBtn, (pressed || sharing) && { opacity: 0.5 }]}
-            hitSlop={12}
+            style={({ pressed }) => [styles.shareBtn, (pressed || sharing) && { opacity: 0.6 }]}
           >
             {sharing
               ? <ActivityIndicator size="small" color={colors.accent} />
-              : <Ionicons name="share-outline" size={22} color={colors.accent} />
+              : <Label style={styles.shareBtnText}>{t('compare.share')}</Label>
             }
           </Pressable>
         )}
@@ -293,6 +292,19 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  shareBtn: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    minWidth: 48,
+    alignItems: 'center',
+  },
+  shareBtnText: {
+    color: colors.accent,
+    fontSize: 12,
   },
   center: {
     flex: 1,

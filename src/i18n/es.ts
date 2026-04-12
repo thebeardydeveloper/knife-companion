@@ -88,7 +88,7 @@ export const es: Translations = {
     properties: 'Propiedades',
     composition: 'Composición',
     hardness: 'Dureza',
-    share: 'Compartir comparación',
+    share: 'Compartir',
   },
   home: {
     subtitle: 'Tu referencia de aceros para cuchillos',
