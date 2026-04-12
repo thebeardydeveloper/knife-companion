@@ -78,6 +78,17 @@ export const es: Translations = {
       characteristics: 'Características',
     },
   },
+  compare: {
+    button: 'Comparar',
+    cancel: 'Cancelar',
+    startButton_one: 'Comparar {{count}} acero',
+    startButton_other: 'Comparar {{count}} aceros',
+    title: 'Comparación',
+    maxReached: 'Máximo 3 aceros',
+    properties: 'Propiedades',
+    composition: 'Composición',
+    hardness: 'Dureza',
+  },
   home: {
     subtitle: 'Tu referencia de aceros para cuchillos',
     sections: {

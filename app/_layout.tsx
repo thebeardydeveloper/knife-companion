@@ -66,6 +66,7 @@ export default function RootLayout() {
             <Stack.Screen name="index" options={{ animation: 'fade' }} />
             <Stack.Screen name="steels" />
             <Stack.Screen name="steel/[id]" />
+            <Stack.Screen name="compare" />
             <Stack.Screen name="settings" options={{ animation: 'slide_from_bottom' }} />
           </Stack>
         </PaperProvider>

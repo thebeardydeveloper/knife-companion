@@ -76,6 +76,17 @@ export const en = {
       characteristics: 'Characteristics',
     },
   },
+  compare: {
+    button: 'Compare',
+    cancel: 'Cancel',
+    startButton_one: 'Compare {{count}} steel',
+    startButton_other: 'Compare {{count}} steels',
+    title: 'Comparison',
+    maxReached: 'Max 3 steels',
+    properties: 'Properties',
+    composition: 'Composition',
+    hardness: 'Hardness',
+  },
   home: {
     subtitle: 'Your knife steel reference',
     sections: {

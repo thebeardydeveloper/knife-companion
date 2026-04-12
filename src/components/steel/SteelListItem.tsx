@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import { H3, Caption, Badge } from '../ui';
 import { colors, spacing } from '../../theme';
 import type { SteelSummary } from '../../api/steels';
@@ -7,16 +8,31 @@ import type { SteelSummary } from '../../api/steels';
 interface SteelListItemProps {
   steel: SteelSummary;
   onPress: () => void;
+  compareMode?: boolean;
+  selected?: boolean;
 }
 
-export function SteelListItem({ steel, onPress }: SteelListItemProps) {
+export function SteelListItem({ steel, onPress, compareMode = false, selected = false }: SteelListItemProps) {
   const { t } = useTranslation();
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.container,
+        selected && styles.containerSelected,
+        pressed && !selected && styles.pressed,
+      ]}
     >
+      {compareMode && (
+        <Ionicons
+          name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+          size={22}
+          color={selected ? colors.accent : colors.border}
+          style={styles.checkbox}
+        />
+      )}
+
       <View style={styles.main}>
         <View style={styles.header}>
           <H3>{steel.name}</H3>
@@ -37,7 +53,10 @@ export function SteelListItem({ steel, onPress }: SteelListItemProps) {
           )}
         </View>
       </View>
-      <Caption style={styles.chevron}>›</Caption>
+
+      {!compareMode && (
+        <Caption style={styles.chevron}>›</Caption>
+      )}
     </Pressable>
   );
 }
@@ -52,8 +71,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  containerSelected: {
+    backgroundColor: colors.accentLight,
+  },
   pressed: {
     backgroundColor: colors.bg,
+  },
+  checkbox: {
+    marginRight: spacing.sm,
   },
   main: {
     flex: 1,
