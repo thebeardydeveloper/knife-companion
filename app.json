@@ -14,9 +14,11 @@
       "backgroundColor": "#F5F2EE"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tbd.knifecompanion"
     },
     "android": {
+      "package": "com.tbd.knifecompanion",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#F5F2EE"
