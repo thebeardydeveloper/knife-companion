@@ -1,0 +1,94 @@
+export const en = {
+  common: {
+    appName: 'KnifeCompanion',
+    search: 'Search',
+    all: 'All',
+    cancel: 'Cancel',
+    noResults: 'No results found',
+    hardness: 'Hardness',
+    hrc: 'HRC',
+  },
+  tabs: {
+    search: 'Search',
+    browse: 'Browse',
+    settings: 'Settings',
+  },
+  categories: {
+    carbon: 'Carbon Steel',
+    spring: 'Spring Steel',
+    bearing: 'Bearing Steel',
+    alloy: 'Alloy Steel',
+    tool_oil: 'Oil-Hardening Tool',
+    tool_water: 'Water-Hardening Tool',
+    tool_air: 'Air-Hardening Tool',
+    tool_german: 'German Tool Steel',
+    stainless: 'Stainless Steel',
+    semi_stainless: 'Semi-Stainless',
+    pm: 'Powder Metallurgy',
+  },
+  steelDetail: {
+    tabs: {
+      composition: 'Composition',
+      properties: 'Properties',
+      heatTreatment: 'Heat Treatment',
+      history: 'History',
+    },
+    composition: {
+      title: 'Chemical Composition',
+      element: 'Element',
+      percentage: '%',
+    },
+    properties: {
+      title: 'Properties',
+      hardness: 'Hardness Range',
+      toughness: 'Toughness',
+      edgeRetention: 'Edge Retention',
+      corrosionResistance: 'Corrosion Resistance',
+      sharpenability: 'Sharpenability',
+    },
+    heatTreatment: {
+      title: 'Heat Treatment Guide',
+      stepTypes: {
+        normalize: 'Normalize',
+        anneal: 'Anneal',
+        stress_relief: 'Stress Relief',
+        harden: 'Harden',
+        quench: 'Quench',
+        cryo: 'Cryogenic Treatment',
+        temper: 'Temper',
+      },
+      quenchMedia: {
+        oil: 'Oil',
+        water: 'Water',
+        air: 'Air',
+        brine: 'Brine',
+        plates: 'Plates',
+        interrupted: 'Interrupted',
+      },
+      temperCycles: 'Temper Cycles',
+      cycles: 'cycles',
+      duration: 'min',
+    },
+    history: {
+      origin: 'Origin',
+      characteristics: 'Characteristics',
+    },
+  },
+  home: {
+    subtitle: 'Your knife steel reference',
+    sections: {
+      encyclopedia: 'Steel Encyclopedia',
+      encyclopediaDesc: 'Compositions, properties & heat treatment guides for 50 steels',
+    },
+  },
+  settings: {
+    title: 'Settings',
+    language: 'Language',
+    languageOptions: {
+      en: 'English',
+      es: 'Spanish',
+    },
+  },
+} as const;
+
+export type Translations = typeof en;
