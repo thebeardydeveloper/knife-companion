@@ -5,3 +5,4 @@ export { SearchBar } from './SearchBar';
 export { FilterChips } from './FilterChips';
 export { PropertyBar } from './PropertyBar';
 export { UniversalList } from './UniversalList';
+export { Sidebar } from './Sidebar';

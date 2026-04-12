@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { paperTheme, colors } from '../src/theme';
 import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
+import { supabase } from '../src/lib/supabase';
 
 const webStyles = StyleSheet.create({
   container: {
@@ -51,6 +52,7 @@ const persister = createAsyncStoragePersister({
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
+  const setUser = useAppStore((s) => s.setUser);
 
   useEffect(() => {
     // Esperar a que Zustand hidrate desde AsyncStorage y luego sincronizar i18next
@@ -68,6 +70,17 @@ export default function RootLayout() {
     }
   }, []);
 
+  useEffect(() => {
+    // Sincronizar sesión de Supabase con el store
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   if (!ready) return null;
 
   const stack = (
@@ -77,6 +90,9 @@ export default function RootLayout() {
       <Stack.Screen name="steel/[id]" />
       <Stack.Screen name="compare" />
       <Stack.Screen name="settings" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="login" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="new-post" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="profile" />
     </Stack>
   );
 

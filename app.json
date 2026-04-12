@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "knifecompaniontemp",
+    "scheme": "com.tbd.knifecompanion",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -32,7 +32,15 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "KnifeCompanion needs access to your photos to let you share your knife making work.",
+          "cameraPermission": "KnifeCompanion needs camera access to take photos of your knife making work."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
