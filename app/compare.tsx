@@ -1,44 +1,157 @@
-import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { useRef, useState } from 'react';
+import { View, ScrollView, StyleSheet, Pressable, ActivityIndicator, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueries } from '@tanstack/react-query';
-import { ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { H1, H2, H3, Body, Label, Caption } from '../src/components/ui';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import { H1, H3, Body, Label, Caption } from '../src/components/ui';
 import { fetchSteel } from '../src/api/steels';
 import { colors, spacing } from '../src/theme';
 import type { Steel, Properties } from '../src/types/steel';
 
-// Elementos de composición en orden de relevancia
 const COMP_KEYS: (keyof Steel['composition'])[] = [
   'C', 'Mn', 'Si', 'Cr', 'Mo', 'V', 'W', 'Ni', 'Co', 'N', 'Nb', 'Cu',
 ];
 
 const PROP_KEYS: { key: keyof Properties; labelKey: string }[] = [
-  { key: 'toughness', labelKey: 'steelDetail.properties.toughness' },
-  { key: 'edgeRetention', labelKey: 'steelDetail.properties.edgeRetention' },
-  { key: 'corrosionResistance', labelKey: 'steelDetail.properties.corrosionResistance' },
-  { key: 'sharpenability', labelKey: 'steelDetail.properties.sharpenability' },
+  { key: 'toughness',          labelKey: 'steelDetail.properties.toughness' },
+  { key: 'edgeRetention',      labelKey: 'steelDetail.properties.edgeRetention' },
+  { key: 'corrosionResistance',labelKey: 'steelDetail.properties.corrosionResistance' },
+  { key: 'sharpenability',     labelKey: 'steelDetail.properties.sharpenability' },
 ];
 
 const LABEL_COL = 108;
+const SHARE_CARD_WIDTH = 360;
+const SHARE_LABEL_COL = 96;
 
-function winners(steels: Steel[], key: keyof Properties): Set<string> {
+function propWinners(steels: Steel[], key: keyof Properties): Set<string> {
   const max = Math.max(...steels.map((s) => s.properties[key]));
   return new Set(steels.filter((s) => s.properties[key] === max).map((s) => s.id));
 }
-
 function hardnessWinners(steels: Steel[]): Set<string> {
   const max = Math.max(...steels.map((s) => s.properties.hardnessMax));
   return new Set(steels.filter((s) => s.properties.hardnessMax === max).map((s) => s.id));
 }
+
+// ─── Tabla reutilizable ───────────────────────────────────────────────────────
+
+interface TableProps {
+  steels: Steel[];
+  activeCompKeys: (keyof Steel['composition'])[];
+  labelCol: number;
+  cardStyles: typeof cardSt;
+  t: (key: string) => string;
+}
+
+function CompareTable({ steels, activeCompKeys, labelCol, cardStyles: cs, t }: TableProps) {
+  return (
+    <>
+      {/* Nombres */}
+      <View style={[cs.row, cs.nameRow]}>
+        <View style={{ width: labelCol }} />
+        {steels.map((s) => (
+          <View key={s.id} style={cs.col}>
+            <H3 style={cs.steelName} numberOfLines={2}>{s.name}</H3>
+            <Caption style={cs.categoryLabel}>{t(`categories.${s.category}`)}</Caption>
+          </View>
+        ))}
+      </View>
+
+      {/* Dureza */}
+      <TableSectionHeader label={t('compare.hardness')} cs={cs} />
+      <View style={cs.row}>
+        <View style={[cs.labelCol, { width: labelCol }]}>
+          <Caption style={cs.labelText}>{t('common.hrc')}</Caption>
+        </View>
+        {steels.map((s) => {
+          const win = hardnessWinners(steels).has(s.id);
+          return (
+            <View key={s.id} style={[cs.col, cs.valueCell, win && cs.winnerCell]}>
+              <Body style={[cs.valueText, win && cs.winnerText]}>
+                {s.properties.hardnessMin}–{s.properties.hardnessMax}
+              </Body>
+            </View>
+          );
+        })}
+      </View>
+
+      {/* Propiedades */}
+      <TableSectionHeader label={t('compare.properties')} cs={cs} />
+      {PROP_KEYS.map(({ key, labelKey }, i) => {
+        const w = propWinners(steels, key);
+        const isLast = i === PROP_KEYS.length - 1;
+        return (
+          <View key={key} style={[cs.row, isLast && cs.rowLast]}>
+            <View style={[cs.labelCol, { width: labelCol }]}>
+              <Caption style={cs.labelText}>{t(labelKey)}</Caption>
+            </View>
+            {steels.map((s) => {
+              const win = w.has(s.id);
+              return (
+                <View key={s.id} style={[cs.col, cs.valueCell, win && cs.winnerCell]}>
+                  <Body style={[cs.valueText, win && cs.winnerText]}>
+                    {s.properties[key]}
+                    <Caption style={[cs.outOf, win && cs.winnerText]}>/10</Caption>
+                  </Body>
+                </View>
+              );
+            })}
+          </View>
+        );
+      })}
+
+      {/* Composición */}
+      {activeCompKeys.length > 0 && (
+        <>
+          <TableSectionHeader label={t('compare.composition')} cs={cs} />
+          {activeCompKeys.map((key, i) => {
+            const isLast = i === activeCompKeys.length - 1;
+            return (
+              <View key={key} style={[cs.row, isLast && cs.rowLast]}>
+                <View style={[cs.labelCol, { width: labelCol }]}>
+                  <Caption style={cs.labelText}>{key}</Caption>
+                </View>
+                {steels.map((s) => {
+                  const val = s.composition[key];
+                  return (
+                    <View key={s.id} style={[cs.col, cs.valueCell]}>
+                      <Body style={cs.valueText}>
+                        {val != null
+                          ? `${val}%`
+                          : <Caption style={cs.emptyVal}>—</Caption>}
+                      </Body>
+                    </View>
+                  );
+                })}
+              </View>
+            );
+          })}
+        </>
+      )}
+    </>
+  );
+}
+
+function TableSectionHeader({ label, cs }: { label: string; cs: typeof cardSt }) {
+  return (
+    <View style={cs.sectionHeader}>
+      <Label style={cs.sectionHeaderText}>{label}</Label>
+    </View>
+  );
+}
+
+// ─── Pantalla ─────────────────────────────────────────────────────────────────
 
 export default function CompareScreen() {
   const { ids: idsParam } = useLocalSearchParams<{ ids: string }>();
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const shareCardRef = useRef<View>(null);
+  const [sharing, setSharing] = useState(false);
 
   const ids = (idsParam ?? '').split(',').filter(Boolean).slice(0, 3);
 
@@ -47,17 +160,32 @@ export default function CompareScreen() {
       queryKey: ['steel', id],
       queryFn: () => fetchSteel(id),
       staleTime: 1000 * 60 * 60 * 24,
-      gcTime: 1000 * 60 * 60 * 24 * 7,
+      gcTime:    1000 * 60 * 60 * 24 * 7,
     })),
   });
 
   const isLoading = results.some((r) => r.isLoading);
   const steels = results.map((r) => r.data).filter((s): s is Steel => !!s);
+  const activeCompKeys = COMP_KEYS.filter((k) => steels.some((s) => s.composition[k] != null));
 
-  // Elementos de composición presentes en al menos un acero
-  const activeCompKeys = COMP_KEYS.filter((k) =>
-    steels.some((s) => s.composition[k] != null)
-  );
+  async function handleShare() {
+    if (sharing || steels.length < 2) return;
+    try {
+      setSharing(true);
+      const uri = await captureRef(shareCardRef, {
+        format: 'png',
+        quality: 1,
+        result: 'tmpfile',
+      });
+      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('compare.share') });
+    } catch (_) {
+      // el usuario canceló o hubo error — no se hace nada
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  const screenWidth = Dimensions.get('window').width;
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -65,12 +193,25 @@ export default function CompareScreen() {
       <View style={styles.header}>
         <Pressable
           onPress={() => router.back()}
-          style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
+          style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.6 }]}
           hitSlop={12}
         >
           <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
         </Pressable>
-        <H1>{t('compare.title')}</H1>
+        <H1 style={styles.headerTitle}>{t('compare.title')}</H1>
+        {!isLoading && steels.length >= 2 && (
+          <Pressable
+            onPress={handleShare}
+            disabled={sharing}
+            style={({ pressed }) => [styles.iconBtn, (pressed || sharing) && { opacity: 0.5 }]}
+            hitSlop={12}
+          >
+            {sharing
+              ? <ActivityIndicator size="small" color={colors.accent} />
+              : <Ionicons name="share-outline" size={22} color={colors.accent} />
+            }
+          </Pressable>
+        )}
       </View>
 
       {isLoading ? (
@@ -78,105 +219,56 @@ export default function CompareScreen() {
           <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Steel name headers */}
-          <View style={[styles.row, styles.nameRow]}>
-            <View style={{ width: LABEL_COL }} />
-            {steels.map((steel) => (
-              <View key={steel.id} style={styles.col}>
-                <H3 style={styles.steelName} numberOfLines={2}>{steel.name}</H3>
-                <Caption style={styles.categoryLabel}>
-                  {t(`categories.${steel.category}`)}
-                </Caption>
-              </View>
-            ))}
-          </View>
+        <>
+          {/* Tabla interactiva (scrollable) */}
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
+            showsVerticalScrollIndicator={false}
+          >
+            <CompareTable
+              steels={steels}
+              activeCompKeys={activeCompKeys}
+              labelCol={LABEL_COL}
+              cardStyles={cardSt}
+              t={t}
+            />
+          </ScrollView>
 
-          {/* Hardness */}
-          <SectionHeader label={t('compare.hardness')} />
-          <View style={styles.row}>
-            <View style={[styles.labelCol, { width: LABEL_COL }]}>
-              <Caption style={styles.labelText}>{t('common.hrc')}</Caption>
+          {/* Tarjeta off-screen para exportar — posicionada fuera de pantalla */}
+          <View
+            style={[styles.shareCardOuter, { left: screenWidth + 100 }]}
+            pointerEvents="none"
+          >
+            <View ref={shareCardRef} style={shareCardStyles.card}>
+              {/* Branding */}
+              <View style={shareCardStyles.brandHeader}>
+                <Label style={shareCardStyles.brandTitle}>KnifeCompanion</Label>
+                <Caption style={shareCardStyles.brandSubtitle}>{t('compare.title')}</Caption>
+              </View>
+
+              {/* Tabla */}
+              <CompareTable
+                steels={steels}
+                activeCompKeys={activeCompKeys}
+                labelCol={SHARE_LABEL_COL}
+                cardStyles={shareSt}
+                t={t}
+              />
+
+              {/* Footer */}
+              <View style={shareCardStyles.footer}>
+                <Caption style={shareCardStyles.footerText}>knifecompanion</Caption>
+              </View>
             </View>
-            {steels.map((steel) => {
-              const isWinner = hardnessWinners(steels).has(steel.id);
-              return (
-                <View key={steel.id} style={[styles.col, styles.valueCell, isWinner && styles.winnerCell]}>
-                  <Body style={[styles.valueText, isWinner && styles.winnerText]}>
-                    {steel.properties.hardnessMin}–{steel.properties.hardnessMax}
-                  </Body>
-                </View>
-              );
-            })}
           </View>
-
-          {/* Properties */}
-          <SectionHeader label={t('compare.properties')} />
-          {PROP_KEYS.map(({ key, labelKey }, i) => {
-            const w = winners(steels, key);
-            const isLast = i === PROP_KEYS.length - 1;
-            return (
-              <View key={key} style={[styles.row, isLast && styles.rowLast]}>
-                <View style={[styles.labelCol, { width: LABEL_COL }]}>
-                  <Caption style={styles.labelText}>{t(labelKey)}</Caption>
-                </View>
-                {steels.map((steel) => {
-                  const isWinner = w.has(steel.id);
-                  return (
-                    <View key={steel.id} style={[styles.col, styles.valueCell, isWinner && styles.winnerCell]}>
-                      <Body style={[styles.valueText, isWinner && styles.winnerText]}>
-                        {steel.properties[key]}<Caption style={[styles.outOf, isWinner && styles.winnerText]}>/10</Caption>
-                      </Body>
-                    </View>
-                  );
-                })}
-              </View>
-            );
-          })}
-
-          {/* Composition */}
-          {activeCompKeys.length > 0 && (
-            <>
-              <SectionHeader label={t('compare.composition')} />
-              {activeCompKeys.map((key, i) => {
-                const isLast = i === activeCompKeys.length - 1;
-                return (
-                  <View key={key} style={[styles.row, isLast && styles.rowLast]}>
-                    <View style={[styles.labelCol, { width: LABEL_COL }]}>
-                      <Caption style={styles.labelText}>{key}</Caption>
-                    </View>
-                    {steels.map((steel) => {
-                      const val = steel.composition[key];
-                      return (
-                        <View key={steel.id} style={[styles.col, styles.valueCell]}>
-                          <Body style={styles.valueText}>
-                            {val != null ? `${val}%` : <Caption style={styles.emptyVal}>—</Caption>}
-                          </Body>
-                        </View>
-                      );
-                    })}
-                  </View>
-                );
-              })}
-            </>
-          )}
-        </ScrollView>
+        </>
       )}
     </View>
   );
 }
 
-function SectionHeader({ label }: { label: string }) {
-  return (
-    <View style={styles.sectionHeader}>
-      <Label style={styles.sectionHeaderText}>{label}</Label>
-    </View>
-  );
-}
+// ─── Estilos pantalla ─────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   screen: {
@@ -193,32 +285,45 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     backgroundColor: colors.surface,
   },
-  backBtn: {},
+  headerTitle: {
+    flex: 1,
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scroll: {
-    flex: 1,
+  scroll: { flex: 1 },
+  shareCardOuter: {
+    position: 'absolute',
+    top: 0,
   },
-  // Name row
+});
+
+// ─── Estilos de tabla (pantalla y tarjeta comparten estructura) ───────────────
+
+const tableBase = {
+  row: {
+    flexDirection: 'row' as const,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  rowLast: { borderBottomWidth: 0 },
   nameRow: {
     backgroundColor: colors.surface,
     borderBottomWidth: 2,
     borderBottomColor: colors.accent,
     paddingVertical: spacing.lg,
   },
-  steelName: {
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
-  categoryLabel: {
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 2,
-  },
-  // Section header
+  steelName: { color: colors.textPrimary, textAlign: 'center' as const },
+  categoryLabel: { color: colors.textSecondary, textAlign: 'center' as const, marginTop: 2 },
   sectionHeader: {
     backgroundColor: colors.bg,
     paddingHorizontal: spacing.md,
@@ -228,57 +333,91 @@ const styles = StyleSheet.create({
   sectionHeaderText: {
     color: colors.textSecondary,
     fontSize: 11,
-    textTransform: 'uppercase',
+    textTransform: 'uppercase' as const,
     letterSpacing: 0.8,
   },
-  // Rows
-  row: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  rowLast: {
-    borderBottomWidth: 0,
-  },
   labelCol: {
-    justifyContent: 'center',
+    justifyContent: 'center' as const,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderRightWidth: 1,
     borderRightColor: colors.border,
   },
-  labelText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-  },
+  labelText: { color: colors.textSecondary, fontSize: 12 },
   col: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.sm,
     borderRightWidth: 1,
     borderRightColor: colors.border,
   },
   valueCell: {},
-  winnerCell: {
-    backgroundColor: colors.accentLight,
+  winnerCell: { backgroundColor: colors.accentLight },
+  valueText: { textAlign: 'center' as const, color: colors.textPrimary, fontSize: 14 },
+  winnerText: { color: colors.accent, fontWeight: '700' as const },
+  outOf: { fontSize: 11, color: colors.textSecondary },
+  emptyVal: { color: colors.border },
+};
+
+// Alias para la pantalla principal (mismos estilos)
+const cardSt = tableBase;
+
+// Estilos para la tarjeta de exportación (más compactos)
+const shareSt: typeof tableBase = {
+  ...tableBase,
+  sectionHeader: {
+    ...tableBase.sectionHeader,
+    paddingTop: spacing.md,
   },
-  valueText: {
-    textAlign: 'center',
-    color: colors.textPrimary,
-    fontSize: 14,
+  col: {
+    ...tableBase.col,
+    paddingVertical: spacing.sm,
   },
-  winnerText: {
-    color: colors.accent,
+  labelCol: {
+    ...tableBase.labelCol,
+    paddingVertical: spacing.sm,
+  },
+  nameRow: {
+    ...tableBase.nameRow,
+    paddingVertical: spacing.md,
+  },
+};
+
+// ─── Estilos de la tarjeta de exportación ────────────────────────────────────
+
+const shareCardStyles = StyleSheet.create({
+  card: {
+    width: SHARE_CARD_WIDTH,
+    backgroundColor: colors.bg,
+    overflow: 'hidden',
+  },
+  brandHeader: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    gap: 2,
+  },
+  brandTitle: {
+    color: colors.surface,
+    fontSize: 16,
     fontWeight: '700',
   },
-  outOf: {
-    fontSize: 11,
-    color: colors.textSecondary,
+  brandSubtitle: {
+    color: colors.accentLight,
+    fontSize: 12,
   },
-  emptyVal: {
-    color: colors.border,
+  footer: {
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'flex-end',
+  },
+  footerText: {
+    color: colors.textSecondary,
+    fontSize: 11,
   },
 });

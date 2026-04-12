@@ -86,6 +86,7 @@ export const en = {
     properties: 'Properties',
     composition: 'Composition',
     hardness: 'Hardness',
+    share: 'Share comparison',
   },
   home: {
     subtitle: 'Your knife steel reference',
