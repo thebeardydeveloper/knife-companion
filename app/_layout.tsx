@@ -93,6 +93,7 @@ export default function RootLayout() {
       <Stack.Screen name="login" options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="new-post" options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="profile" />
+      <Stack.Screen name="post/[id]" />
     </Stack>
   );
 

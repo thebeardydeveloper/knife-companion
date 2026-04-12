@@ -94,10 +94,19 @@ export interface Profile {
 export interface Post {
   id: string;
   user_id: string;
-  image_url: string;
+  image_url: string;          // legacy — primer imagen
+  image_urls: string[] | null; // todas las imágenes (nuevo)
   description: string;
   created_at: string;
   fb_post_id: string | null;
   ig_media_id: string | null;
+  // Knife metadata (todos opcionales)
+  steel_id: string | null;
+  steel_name: string | null;
+  handle_materials: string[] | null;
+  blade_length_mm: number | null;
+  blade_width_mm: number | null;
+  handle_length_mm: number | null;
+  extra_notes: string | null;
   profiles?: Pick<Profile, 'username' | 'avatar_url'>;
 }
