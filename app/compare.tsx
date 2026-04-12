@@ -5,8 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueries } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
+import { shareComparison } from '../src/utils/shareComparison';
 import { H1, H3, Body, Label, Caption } from '../src/components/ui';
 import { fetchSteel } from '../src/api/steels';
 import { colors, spacing } from '../src/theme';
@@ -172,12 +171,7 @@ export default function CompareScreen() {
     if (sharing || steels.length < 2) return;
     try {
       setSharing(true);
-      const uri = await captureRef(shareCardRef, {
-        format: 'png',
-        quality: 1,
-        result: 'tmpfile',
-      });
-      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('compare.share') });
+      await shareComparison(shareCardRef, t('compare.share'));
     } catch (_) {
       // el usuario canceló o hubo error — no se hace nada
     } finally {
