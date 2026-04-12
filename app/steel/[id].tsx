@@ -22,7 +22,7 @@ export default function SteelDetailScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<Tab>('composition');
-  const { data: steel, isLoading } = useSteel(id);
+  const { data: steel, isLoading, isError, refetch } = useSteel(id);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -73,11 +73,19 @@ export default function SteelDetailScreen() {
       {/* Content */}
       {isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
-      ) : !steel ? (
+      ) : isError || !steel ? (
         <View style={styles.center}>
-          <Body style={{ color: colors.textSecondary }}>{t('common.noResults')}</Body>
+          <Ionicons name="cloud-offline-outline" size={40} color={colors.textSecondary} />
+          <Body style={styles.errorText}>{t('common.errorLoad')}</Body>
+          <Pressable
+            onPress={() => refetch()}
+            style={({ pressed }) => [styles.retryBtn, pressed && styles.retryBtnPressed]}
+          >
+            <Ionicons name="refresh" size={16} color={colors.accent} />
+            <Body style={styles.retryText}>{t('common.retry')}</Body>
+          </Pressable>
         </View>
       ) : (
         <ScrollView
@@ -164,6 +172,30 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  errorText: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  retryBtnPressed: {
+    backgroundColor: colors.accentLight,
+  },
+  retryText: {
+    color: colors.accent,
+    fontWeight: '600',
   },
   scroll: {
     flex: 1,

@@ -7,6 +7,8 @@ export const es: Translations = {
     all: 'Todos',
     cancel: 'Cancelar',
     noResults: 'Sin resultados',
+    errorLoad: 'No se pudieron cargar los datos',
+    retry: 'Reintentar',
     hardness: 'Dureza',
     hrc: 'HRC',
   },

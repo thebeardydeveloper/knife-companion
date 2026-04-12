@@ -5,6 +5,8 @@ export const en = {
     all: 'All',
     cancel: 'Cancel',
     noResults: 'No results found',
+    errorLoad: 'Could not load data',
+    retry: 'Retry',
     hardness: 'Hardness',
     hrc: 'HRC',
   },

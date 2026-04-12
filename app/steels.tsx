@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Searchbar } from 'react-native-paper';
-import { FilterChips, H2 } from '../src/components/ui';
+import { FilterChips, H2, Body } from '../src/components/ui';
 import { SteelListItem } from '../src/components/steel/SteelListItem';
 import { useSteels } from '../src/hooks/useSteels';
 import { colors, spacing } from '../src/theme';
@@ -35,7 +35,7 @@ export default function SteelsScreen() {
     { value: 'pm', label: t('categories.pm') },
   ];
 
-  const { data: steels = [], isLoading } = useSteels(
+  const { data: steels = [], isLoading, isError, refetch } = useSteels(
     selectedCategory === 'all' ? undefined : selectedCategory
   );
 
@@ -69,14 +69,6 @@ export default function SteelsScreen() {
           inputStyle={styles.searchInput}
           elevation={0}
         />
-
-        <Pressable
-          onPress={() => router.push('/settings')}
-          style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.6 }]}
-          hitSlop={12}
-        >
-          <Ionicons name="settings-outline" size={22} color={colors.textPrimary} />
-        </Pressable>
       </View>
 
       {/* Filter chips */}
@@ -89,11 +81,24 @@ export default function SteelsScreen() {
       {/* List */}
       {isLoading ? (
         <View style={styles.center}>
-          <H2 style={{ color: colors.textSecondary }}>...</H2>
+          <ActivityIndicator size="large" color={colors.accent} />
+        </View>
+      ) : isError ? (
+        <View style={styles.center}>
+          <Ionicons name="cloud-offline-outline" size={40} color={colors.textSecondary} />
+          <Body style={styles.errorText}>{t('common.errorLoad')}</Body>
+          <Pressable
+            onPress={() => refetch()}
+            style={({ pressed }) => [styles.retryBtn, pressed && styles.retryBtnPressed]}
+          >
+            <Ionicons name="refresh" size={16} color={colors.accent} />
+            <Body style={styles.retryText}>{t('common.retry')}</Body>
+          </Pressable>
         </View>
       ) : filtered.length === 0 ? (
         <View style={styles.center}>
-          <H2 style={{ color: colors.textSecondary }}>{t('common.noResults')}</H2>
+          <Ionicons name="search-outline" size={40} color={colors.textSecondary} />
+          <Body style={styles.errorText}>{t('common.noResults')}</Body>
         </View>
       ) : (
         <FlashList
@@ -151,5 +156,29 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  errorText: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  retryBtnPressed: {
+    backgroundColor: colors.accentLight,
+  },
+  retryText: {
+    color: colors.accent,
+    fontWeight: '600',
   },
 });

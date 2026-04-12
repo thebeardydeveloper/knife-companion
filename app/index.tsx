@@ -1,23 +1,56 @@
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { H1, H2, Body } from '../src/components/ui';
+import { useLanguage } from '../src/hooks/useLanguage';
 import { colors, spacing } from '../src/theme';
+import type { Language } from '../src/i18n/index';
+
+const LANGUAGES: { value: Language; flag: string; label: string }[] = [
+  { value: 'en', flag: '🇺🇸', label: 'EN' },
+  { value: 'es', flag: '🇪🇸', label: 'ES' },
+];
 
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { language, setLanguage } = useLanguage();
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      {/* Language picker — top right */}
+      <View style={styles.langRow}>
+        {LANGUAGES.map((lang) => {
+          const isActive = language === lang.value;
+          return (
+            <Pressable
+              key={lang.value}
+              onPress={() => setLanguage(lang.value)}
+              style={({ pressed }) => [
+                styles.langBtn,
+                isActive && styles.langBtnActive,
+                pressed && !isActive && styles.langBtnPressed,
+              ]}
+            >
+              <Text style={styles.langFlag}>{lang.flag}</Text>
+              <Text style={[styles.langLabel, isActive && styles.langLabelActive]}>
+                {lang.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* Hero */}
       <View style={styles.hero}>
         <H1 style={styles.appName}>{t('common.appName')}</H1>
         <Body style={styles.subtitle}>{t('home.subtitle')}</Body>
       </View>
 
+      {/* Section cards */}
       <View style={styles.sections}>
         <Pressable
           style={({ pressed }) => [styles.sectionCard, pressed && styles.sectionCardPressed]}
@@ -41,6 +74,43 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.bg,
+  },
+  langRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  langBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  langBtnActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accentLight,
+  },
+  langBtnPressed: {
+    backgroundColor: colors.bg,
+  },
+  langFlag: {
+    fontSize: 18,
+    lineHeight: 22,
+  },
+  langLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  langLabelActive: {
+    color: colors.accent,
   },
   hero: {
     flex: 1,

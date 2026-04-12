@@ -20,21 +20,29 @@ export function HistorySection({
   const { t } = useTranslation();
   const language = useAppStore((s) => s.language);
 
-  const origin = language === 'es' ? originEs : originEn;
-  const characteristics = language === 'es' ? characteristicsEs : characteristicsEn;
+  const origin = (language === 'es' ? originEs : originEn) || (language === 'es' ? originEn : originEs);
+  const characteristics = (language === 'es' ? characteristicsEs : characteristicsEn) || (language === 'es' ? characteristicsEn : characteristicsEs);
 
   return (
     <View style={styles.container}>
       <H2 style={styles.sectionTitle}>{t('steelDetail.history.origin')}</H2>
       <View style={styles.card}>
-        <Body style={styles.text}>{origin}</Body>
+        {origin ? (
+          <Body style={styles.text}>{origin}</Body>
+        ) : (
+          <Body style={styles.empty}>—</Body>
+        )}
       </View>
 
       <H2 style={[styles.sectionTitle, styles.secondTitle]}>
         {t('steelDetail.history.characteristics')}
       </H2>
       <View style={styles.card}>
-        <Body style={styles.text}>{characteristics}</Body>
+        {characteristics ? (
+          <Body style={styles.text}>{characteristics}</Body>
+        ) : (
+          <Body style={styles.empty}>—</Body>
+        )}
       </View>
     </View>
   );
@@ -60,5 +68,8 @@ const styles = StyleSheet.create({
   text: {
     lineHeight: 24,
     color: colors.textPrimary,
+  },
+  empty: {
+    color: colors.textSecondary,
   },
 });

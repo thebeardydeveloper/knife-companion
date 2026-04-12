@@ -8,7 +8,8 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { paperTheme } from '../src/theme';
-import '../src/i18n';
+import i18n from '../src/i18n';
+import { useAppStore } from '../src/store/useAppStore';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -37,8 +38,19 @@ export default function RootLayout() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setReady(true);
-    SplashScreen.hideAsync();
+    // Esperar a que Zustand hidrate desde AsyncStorage y luego sincronizar i18next
+    if (useAppStore.persist.hasHydrated()) {
+      i18n.changeLanguage(useAppStore.getState().language);
+      setReady(true);
+      SplashScreen.hideAsync();
+    } else {
+      const unsub = useAppStore.persist.onFinishHydration((state) => {
+        i18n.changeLanguage(state.language);
+        setReady(true);
+        SplashScreen.hideAsync();
+      });
+      return unsub;
+    }
   }, []);
 
   if (!ready) return null;
