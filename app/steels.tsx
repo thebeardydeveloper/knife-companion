@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,7 @@ import { Searchbar } from 'react-native-paper';
 import { FilterChips, H2, Body, Label } from '../src/components/ui';
 import { SteelListItem } from '../src/components/steel/SteelListItem';
 import { useSteels } from '../src/hooks/useSteels';
+import { useAppStore } from '../src/store/useAppStore';
 import { colors, spacing } from '../src/theme';
 import type { SteelCategory } from '../src/types/steel';
 import type { SteelSummary } from '../src/api/steels';
@@ -23,6 +24,17 @@ export default function SteelsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<SteelCategory | 'all'>('all');
   const [compareMode, setCompareMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const comparePreselect = useAppStore((s) => s.comparePreselect);
+  const setComparePreselect = useAppStore((s) => s.setComparePreselect);
+
+  // Activa el modo comparación con el acero preseleccionado al volver del detalle
+  useEffect(() => {
+    if (comparePreselect) {
+      setCompareMode(true);
+      setSelectedIds(new Set([comparePreselect]));
+      setComparePreselect(null);
+    }
+  }, [comparePreselect]);
 
   const categories: { value: SteelCategory | 'all'; label: string }[] = [
     { value: 'all', label: t('common.all') },

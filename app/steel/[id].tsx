@@ -10,6 +10,7 @@ import { PropertiesCard } from '../../src/components/steel/PropertiesCard';
 import { HeatTreatmentGuide } from '../../src/components/steel/HeatTreatmentGuide';
 import { HistorySection } from '../../src/components/steel/HistorySection';
 import { useSteel } from '../../src/hooks/useSteel';
+import { useAppStore } from '../../src/store/useAppStore';
 import { colors, spacing } from '../../src/theme';
 
 type Tab = 'composition' | 'properties' | 'heatTreatment' | 'history';
@@ -23,6 +24,12 @@ export default function SteelDetailScreen() {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<Tab>('composition');
   const { data: steel, isLoading, isError, refetch } = useSteel(id);
+  const setComparePreselect = useAppStore((s) => s.setComparePreselect);
+
+  function handleCompare() {
+    setComparePreselect(id);
+    router.back();
+  }
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -46,7 +53,15 @@ export default function SteelDetailScreen() {
           )}
         </View>
         {steel && (
-          <Badge label={t(`categories.${steel.category}`)} variant="accent" />
+          <View style={styles.headerRight}>
+            <Pressable
+              onPress={handleCompare}
+              style={({ pressed }) => [styles.compareBtn, pressed && { opacity: 0.6 }]}
+            >
+              <Label style={styles.compareBtnText}>{t('compare.button')}</Label>
+            </Pressable>
+            <Badge label={t(`categories.${steel.category}`)} variant="accent" />
+          </View>
         )}
       </View>
 
@@ -136,6 +151,21 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     marginTop: 2,
+  },
+  headerRight: {
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
+  compareBtn: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  compareBtnText: {
+    color: colors.accent,
+    fontSize: 11,
   },
   headerTitle: {
     flex: 1,
