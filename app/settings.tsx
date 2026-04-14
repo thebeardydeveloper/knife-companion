@@ -1,9 +1,10 @@
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { H1, H2, Body } from '../src/components/ui';
+import { H1, H2, Body, Caption } from '../src/components/ui';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { colors, spacing } from '../src/theme';
 import type { Language } from '../src/i18n/index';
@@ -55,6 +56,26 @@ export default function SettingsScreen() {
               </Pressable>
             );
           })}
+        </View>
+      </View>
+
+      {/* About section */}
+      <View style={styles.section}>
+        <H2 style={styles.sectionLabel}>{t('settings.about')}</H2>
+        <View style={styles.optionsGroup}>
+          <Pressable
+            style={[styles.option, styles.optionRow]}
+            onPress={() => router.push('/privacy' as any)}
+          >
+            <Body style={styles.optionText}>{t('settings.privacyPolicy')}</Body>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </Pressable>
+          <View style={[styles.option, styles.optionLast, styles.optionRow]}>
+            <Body style={styles.optionText}>{t('settings.version')}</Body>
+            <Caption style={styles.versionText}>
+              {Constants.expoConfig?.version ?? '1.0.0'}
+            </Caption>
+          </View>
         </View>
       </View>
     </View>
@@ -118,5 +139,12 @@ const styles = StyleSheet.create({
   optionTextSelected: {
     color: colors.accent,
     fontWeight: '600',
+  },
+  optionRow: {
+    justifyContent: 'space-between',
+  },
+  versionText: {
+    color: colors.textSecondary,
+    fontSize: 13,
   },
 });

@@ -1,35 +1,22 @@
-import { useState } from 'react';
 import { View, ScrollView, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { H1, Badge, Body, Label } from '../../src/components/ui';
+import { H1, Body, Caption } from '../../src/components/ui';
 import { CompositionTable } from '../../src/components/steel/CompositionTable';
 import { PropertiesCard } from '../../src/components/steel/PropertiesCard';
 import { HeatTreatmentGuide } from '../../src/components/steel/HeatTreatmentGuide';
 import { HistorySection } from '../../src/components/steel/HistorySection';
 import { useSteel } from '../../src/hooks/useSteel';
-import { useAppStore } from '../../src/store/useAppStore';
 import { colors, spacing } from '../../src/theme';
-
-type Tab = 'composition' | 'properties' | 'heatTreatment' | 'history';
-
-const TABS: Tab[] = ['composition', 'properties', 'heatTreatment', 'history'];
 
 export default function SteelDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<Tab>('composition');
   const { data: steel, isLoading, isError, refetch } = useSteel(id);
-  const setComparePreselect = useAppStore((s) => s.setComparePreselect);
-
-  function handleCompare() {
-    setComparePreselect(id);
-    router.back();
-  }
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -42,47 +29,15 @@ export default function SteelDetailScreen() {
         >
           <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
         </Pressable>
-        <View style={styles.headerTitle}>
-          {steel && (
-            <>
-              <H1>{steel.name}</H1>
-              {steel.aliases.length > 0 && (
-                <Body style={styles.aliases}>{steel.aliases.join(' · ')}</Body>
-              )}
-            </>
-          )}
-        </View>
         {steel && (
-          <View style={styles.headerRight}>
-            <Pressable
-              onPress={handleCompare}
-              style={({ pressed }) => [styles.compareBtn, pressed && { opacity: 0.6 }]}
-            >
-              <Label style={styles.compareBtnText}>{t('compare.button')}</Label>
-            </Pressable>
-            <Badge label={t(`categories.${steel.category}`)} variant="accent" />
+          <View style={styles.headerTitle}>
+            <H1 style={styles.steelName}>{steel.name}</H1>
+            {steel.aliases.length > 0 && (
+              <Caption style={styles.aliases}>{steel.aliases.join(' · ')}</Caption>
+            )}
+            <Caption style={styles.category}>{t(`categories.${steel.category}`)}</Caption>
           </View>
         )}
-      </View>
-
-      {/* Tab bar */}
-      <View style={styles.tabBar}>
-        {TABS.map((tab) => (
-          <Pressable
-            key={tab}
-            onPress={() => setActiveTab(tab)}
-            style={[styles.tabItem, activeTab === tab && styles.tabItemActive]}
-          >
-            <Label
-              style={[
-                styles.tabLabel,
-                activeTab === tab && styles.tabLabelActive,
-              ]}
-            >
-              {t(`steelDetail.tabs.${tab}`)}
-            </Label>
-          </Pressable>
-        ))}
       </View>
 
       {/* Content */}
@@ -108,26 +63,25 @@ export default function SteelDetailScreen() {
           contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
           showsVerticalScrollIndicator={false}
         >
-          {activeTab === 'composition' && (
-            <CompositionTable composition={steel.composition} />
-          )}
-          {activeTab === 'properties' && (
-            <PropertiesCard properties={steel.properties} />
-          )}
-          {activeTab === 'heatTreatment' && (
-            <HeatTreatmentGuide
-              steps={steel.heatTreatment.steps}
-              temperCycles={steel.heatTreatment.temperCycles}
-            />
-          )}
-          {activeTab === 'history' && (
-            <HistorySection
-              originEn={steel.originEn}
-              originEs={steel.originEs}
-              characteristicsEn={steel.characteristicsEn}
-              characteristicsEs={steel.characteristicsEs}
-            />
-          )}
+          <View style={styles.divider} />
+          <CompositionTable composition={steel.composition} />
+
+          <View style={styles.divider} />
+          <PropertiesCard properties={steel.properties} />
+
+          <View style={styles.divider} />
+          <HeatTreatmentGuide
+            steps={steel.heatTreatment.steps}
+            temperCycles={steel.heatTreatment.temperCycles}
+          />
+
+          <View style={styles.divider} />
+          <HistorySection
+            originEn={steel.originEn}
+            originEs={steel.originEs}
+            characteristicsEn={steel.characteristicsEn}
+            characteristicsEs={steel.characteristicsEs}
+          />
         </ScrollView>
       )}
     </View>
@@ -150,53 +104,32 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   backBtn: {
-    marginTop: 2,
-  },
-  headerRight: {
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-  },
-  compareBtn: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: colors.accent,
-  },
-  compareBtnText: {
-    color: colors.accent,
-    fontSize: 11,
+    marginTop: 4,
   },
   headerTitle: {
     flex: 1,
     gap: 2,
   },
+  steelName: {
+    fontSize: 24,
+    lineHeight: 28,
+  },
   aliases: {
     color: colors.textSecondary,
-    fontSize: 13,
+    fontSize: 12,
+    marginTop: 1,
   },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabItemActive: {
-    borderBottomColor: colors.accent,
-  },
-  tabLabel: {
-    color: colors.textSecondary,
-    fontSize: 10,
-  },
-  tabLabelActive: {
+  category: {
     color: colors.accent,
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.4,
+    marginTop: 3,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.md,
   },
   center: {
     flex: 1,

@@ -11,7 +11,7 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../../hooks/useLanguage';
-import { H3, Body, Caption } from './Typography';
+import { Body, Caption } from './Typography';
 import { colors, spacing } from '../../theme';
 import type { Language } from '../../i18n/index';
 
@@ -32,9 +32,10 @@ interface SidebarItem {
 }
 
 const ITEMS: SidebarItem[] = [
-  { key: 'gallery',      icon: 'images-outline',   labelKey: 'sidebar.gallery',      route: '/',       active: true },
+  { key: 'home',         icon: 'home-outline',      labelKey: 'sidebar.home',         route: '/' },
+  { key: 'artisans',     icon: 'images-outline',    labelKey: 'sidebar.artisans',     route: '/artisans' },
   { key: 'encyclopedia', icon: 'layers-outline',    labelKey: 'sidebar.encyclopedia', route: '/steels' },
-  { key: 'settings',    icon: 'settings-outline',  labelKey: 'sidebar.settings',     route: '/settings' },
+  { key: 'settings',     icon: 'settings-outline',  labelKey: 'sidebar.settings',     route: '/settings' },
 ];
 
 interface Props {
@@ -90,13 +91,6 @@ export function Sidebar({ open, onClose, currentRoute = '/' }: Props) {
 
       {/* Drawer */}
       <Animated.View style={[styles.drawer, drawerStyle, { paddingTop: insets.top + spacing.lg }]}>
-        {/* Brand */}
-        <View style={styles.brand}>
-          <H3 style={styles.brandName}>KnifeCompanion</H3>
-        </View>
-
-        <View style={styles.divider} />
-
         {/* Nav items */}
         <View style={styles.nav}>
           {ITEMS.map((item) => {
@@ -180,20 +174,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 16,
   },
-  brand: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  brandName: {
-    color: colors.textPrimary,
-    fontSize: 18,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginHorizontal: spacing.lg,
-    marginVertical: spacing.sm,
-  },
   nav: {
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
@@ -205,13 +185,16 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 4,
+    borderLeftWidth: 3,
+    borderLeftColor: 'transparent',
   },
   navItemActive: {
     backgroundColor: colors.accentLight,
+    borderLeftColor: colors.accent,
   },
   navItemPressed: {
-    backgroundColor: colors.bg,
+    backgroundColor: colors.surfaceElevated,
   },
   navLabel: {
     color: colors.textSecondary,
@@ -242,17 +225,17 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    borderRadius: 20,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.surfaceElevated,
   },
   langBtnActive: {
     borderColor: colors.accent,
     backgroundColor: colors.accentLight,
   },
   langBtnPressed: {
-    backgroundColor: colors.bg,
+    backgroundColor: colors.surfaceElevated,
     opacity: 0.7,
   },
   langFlag: {

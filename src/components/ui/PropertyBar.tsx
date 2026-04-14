@@ -42,6 +42,10 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 3,
     backgroundColor: colors.accent,
+    shadowColor: colors.accent,
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 0 },
   },
   value: {
     width: 32,

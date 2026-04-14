@@ -1,11 +1,11 @@
-import { MD3LightTheme } from 'react-native-paper';
+import { MD3DarkTheme } from 'react-native-paper';
 import type { MD3Theme } from 'react-native-paper';
 import { colors } from './colors';
 
 export const paperTheme: MD3Theme = {
-  ...MD3LightTheme,
+  ...MD3DarkTheme,
   colors: {
-    ...MD3LightTheme.colors,
+    ...MD3DarkTheme.colors,
     primary: colors.accent,
     onPrimary: '#FFFFFF',
     primaryContainer: colors.accentLight,
@@ -14,7 +14,7 @@ export const paperTheme: MD3Theme = {
     onBackground: colors.textPrimary,
     surface: colors.surface,
     onSurface: colors.textPrimary,
-    surfaceVariant: colors.bg,
+    surfaceVariant: colors.surfaceElevated,
     onSurfaceVariant: colors.textSecondary,
     outline: colors.border,
     error: colors.error,

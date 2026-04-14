@@ -503,7 +503,7 @@ export default function NewPostScreen() {
 
           {error && <Caption style={styles.errorText}>{error}</Caption>}
 
-          {/* Cross-posting */}
+          {/* Cross-posting — not yet implemented
           {Platform.OS !== 'web' && (
             <View style={styles.crossPostSection}>
               <Caption style={styles.crossPostLabel}>{t('newPost.publishTo')}</Caption>
@@ -519,6 +519,7 @@ export default function NewPostScreen() {
               </View>
             </View>
           )}
+          */}
         </ScrollView>
       </KeyboardAvoidingView>
     </>

@@ -6,3 +6,4 @@ export { FilterChips } from './FilterChips';
 export { PropertyBar } from './PropertyBar';
 export { UniversalList } from './UniversalList';
 export { Sidebar } from './Sidebar';
+export { ProfileButton } from './ProfileButton';

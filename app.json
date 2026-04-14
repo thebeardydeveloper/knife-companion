@@ -5,26 +5,41 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "com.tbd.knifecompanion",
+    "scheme": "com.thebeardydev.knifecompanion",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "description": "The ultimate reference app for knife makers and enthusiasts. Explore 50+ steels with full composition, properties, and heat treatment guides. Share your work, discover other makers, and connect with the knife making community.",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/images/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F5F2EE"
+      "backgroundColor": "#393737"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tbd.knifecompanion"
+      "bundleIdentifier": "com.thebeardydev.knifecompanion",
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": []
+      },
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "KnifeCompanion needs access to your photos to let you share your knife making work.",
+        "NSCameraUsageDescription": "KnifeCompanion needs camera access to take photos of your knife making work."
+      }
     },
     "android": {
-      "package": "com.tbd.knifecompanion",
+      "package": "com.thebeardydev.knifecompanion",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#F5F2EE"
+        "backgroundColor": "#393737"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -39,6 +54,14 @@
         {
           "photosPermission": "KnifeCompanion needs access to your photos to let you share your knife making work.",
           "cameraPermission": "KnifeCompanion needs camera access to take photos of your knife making work."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#C4822A",
+          "sounds": []
         }
       ]
     ],

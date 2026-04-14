@@ -11,10 +11,12 @@ const CHUNK_SIZE = 1800;
 
 function makeStorage() {
   if (Platform.OS === 'web') {
+    // Durante SSR (static rendering) no existe window/localStorage — devolvemos no-op
+    const isBrowser = typeof window !== 'undefined';
     return {
-      getItem: (key: string) => AsyncStorage.getItem(key),
-      setItem: (key: string, value: string) => AsyncStorage.setItem(key, value),
-      removeItem: (key: string) => AsyncStorage.removeItem(key),
+      getItem: (key: string) => isBrowser ? AsyncStorage.getItem(key) : Promise.resolve(null),
+      setItem: (key: string, value: string) => isBrowser ? AsyncStorage.setItem(key, value) : Promise.resolve(),
+      removeItem: (key: string) => isBrowser ? AsyncStorage.removeItem(key) : Promise.resolve(),
     };
   }
 
@@ -88,7 +90,23 @@ export interface Profile {
   id: string;
   username: string;
   avatar_url: string | null;
+  bio: string | null;
   created_at: string;
+}
+
+export interface PostLike {
+  post_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+export interface PostComment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  profiles?: Pick<Profile, 'username' | 'avatar_url'>;
 }
 
 export interface Post {

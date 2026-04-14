@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, StyleSheet, Image, Pressable, ScrollView, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Body, Caption } from '../ui/Typography';
 import { colors, spacing } from '../../theme';
@@ -71,6 +72,13 @@ export function PostCard({ post }: Props) {
             ))}
           </ScrollView>
 
+          {/* Gradient overlay */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.4)']}
+            style={styles.imageGradient}
+            pointerEvents="none"
+          />
+
           {/* Counter badge */}
           {hasMultiple && (
             <View style={styles.counter}>
@@ -96,18 +104,24 @@ export function PostCard({ post }: Props) {
         onPress={handlePress}
         style={({ pressed }) => [styles.content, pressed && { backgroundColor: colors.accentLight }]}
       >
-        {/* Author row */}
+        {/* Author row — el autor tiene su propio Pressable para ir al perfil */}
         <View style={styles.authorRow}>
-          <View style={styles.avatar}>
-            {post.profiles?.avatar_url
-              ? <Image source={{ uri: post.profiles.avatar_url }} style={styles.avatarImg} />
-              : <Caption style={styles.avatarInitials}>{initials}</Caption>
-            }
-          </View>
-          <View style={styles.authorInfo}>
-            <Body style={styles.authorName}>{username}</Body>
-            <Caption style={styles.timestamp}>{timeAgo(post.created_at)}</Caption>
-          </View>
+          <Pressable
+            onPress={() => router.push(`/user/${post.user_id}` as any)}
+            style={({ pressed }) => [styles.authorPressable, pressed && { opacity: 0.6 }]}
+            hitSlop={4}
+          >
+            <View style={styles.avatar}>
+              {post.profiles?.avatar_url
+                ? <Image source={{ uri: post.profiles.avatar_url }} style={styles.avatarImg} />
+                : <Caption style={styles.avatarInitials}>{initials}</Caption>
+              }
+            </View>
+            <View style={styles.authorInfo}>
+              <Body style={styles.authorName}>{username}</Body>
+              <Caption style={styles.timestamp}>{timeAgo(post.created_at)}</Caption>
+            </View>
+          </Pressable>
         </View>
 
         {/* Description */}
@@ -156,6 +170,13 @@ const styles = StyleSheet.create({
     aspectRatio: 4 / 3,
     backgroundColor: colors.bg,
   },
+  imageGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '40%',
+  },
   counter: {
     position: 'absolute',
     top: spacing.sm,
@@ -184,7 +205,12 @@ const styles = StyleSheet.create({
   authorRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  authorPressable: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
+    flex: 1,
   },
   avatar: {
     width: 32,
@@ -204,7 +230,7 @@ const styles = StyleSheet.create({
   metaHint: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   metaPill: {
     backgroundColor: colors.bg,
-    borderRadius: 20,
+    borderRadius: 6,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderWidth: 1,

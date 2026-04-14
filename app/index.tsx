@@ -1,89 +1,98 @@
-import { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  Pressable,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
-  TextInput,
-} from 'react-native';
+import { useState } from 'react';
+import { View, ScrollView, Pressable, StyleSheet, Image, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import { H1, Body, Caption } from '../src/components/ui';
+import { Body, Caption, Label } from '../src/components/ui';
 import { Sidebar } from '../src/components/ui/Sidebar';
-import { PostCard } from '../src/components/gallery/PostCard';
-import { supabase } from '../src/lib/supabase';
+import { ProfileButton } from '../src/components/ui/ProfileButton';
 import { useAppStore } from '../src/store/useAppStore';
 import { colors, spacing } from '../src/theme';
-import type { Post } from '../src/lib/supabase';
 
-async function fetchFeed(search?: string): Promise<Post[]> {
-  let query = supabase
-    .from('posts')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(60);
+const headLogo = require('../assets/images/head-logo.png');
 
-  if (search) {
-    query = query.or(
-      `description.ilike.%${search}%,steel_name.ilike.%${search}%,extra_notes.ilike.%${search}%`
-    );
-  }
+// ─── Section accent colors ────────────────────────────────────────────────────
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data as Post[]) ?? [];
+const COLORS = {
+  encyclopedia: '#5BB8F5',
+  artisans:     '#E8571A',
+  suppliers:    '#4CAF7D',
+  tutorials:    '#A87FE8',
+} as const;
+
+type SectionKey = keyof typeof COLORS;
+
+// ─── Section + tile definitions ──────────────────────────────────────────────
+
+interface TileDef {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  labelKey: string;
+  route?: string;
+  comingSoon?: boolean;
 }
 
-export default function HomeScreen() {
+interface SectionDef {
+  key: SectionKey;
+  titleKey: string;
+  tiles: TileDef[];
+}
+
+const SECTIONS: SectionDef[] = [
+  {
+    key: 'encyclopedia',
+    titleKey: 'dashboard.encyclopedia',
+    tiles: [
+      { icon: 'layers-outline',  labelKey: 'dashboard.steels',  route: '/steels' },
+      { icon: 'leaf-outline',    labelKey: 'dashboard.woods',   comingSoon: true },
+      { icon: 'flask-outline',   labelKey: 'dashboard.resins',  comingSoon: true },
+    ],
+  },
+  {
+    key: 'artisans',
+    titleKey: 'dashboard.artisans',
+    tiles: [
+      { icon: 'images-outline',  labelKey: 'dashboard.latestWork',    route: '/artisans' },
+      { icon: 'search-outline',  labelKey: 'dashboard.searchArtisan', route: '/artisans/search' },
+    ],
+  },
+  {
+    key: 'suppliers',
+    titleKey: 'dashboard.suppliers',
+    tiles: [
+      { icon: 'storefront-outline', labelKey: 'dashboard.byName',     route: '/suppliers/by-name' },
+      { icon: 'construct-outline',  labelKey: 'dashboard.byMaterial', route: '/suppliers/by-material' },
+    ],
+  },
+  {
+    key: 'tutorials',
+    titleKey: 'dashboard.tutorials',
+    tiles: [
+      { icon: 'play-circle-outline', labelKey: 'dashboard.comingSoon', comingSoon: true },
+    ],
+  },
+];
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+
+export default function DashboardScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const user = useAppStore((s) => s.user);
-
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const isSearching = searchText.length > 0;
 
-  // Debounce 350ms
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchText.trim()), 350);
-    return () => clearTimeout(timer);
-  }, [searchText]);
-
-  const { data: posts, isLoading, isError, refetch, isRefetching } = useQuery<Post[]>({
-    queryKey: ['feed', debouncedSearch],
-    queryFn: () => fetchFeed(debouncedSearch || undefined),
-    staleTime: debouncedSearch ? 0 : 1000 * 60 * 2,
-    gcTime: 1000 * 60 * 30,
-  });
-
-  function handleNewPost() {
-    if (!user) router.push('/login' as any);
-    else router.push('/new-post' as any);
-  }
+  const logoWidth = screenWidth * 0.38;
 
   function handleProfile() {
     if (!user) router.push('/login' as any);
     else router.push('/profile' as any);
   }
 
-  const renderPost = useCallback(({ item }: { item: Post }) => (
-    <PostCard post={item} />
-  ), []);
-
-  const keyExtractor = useCallback((item: Post) => item.id, []);
-
-  const isEmpty = !isLoading && (posts?.length ?? 0) === 0;
-
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      {/* ── Header ── */}
+      {/* Header */}
       <View style={styles.header}>
         <Pressable
           onPress={() => setSidebarOpen(true)}
@@ -93,118 +102,103 @@ export default function HomeScreen() {
           <Ionicons name="menu" size={26} color={colors.textPrimary} />
         </Pressable>
 
-        <H1 style={styles.headerTitle}>{t('common.appName')}</H1>
+        <Image
+          source={headLogo}
+          style={{ width: logoWidth, height: 34 }}
+          resizeMode="contain"
+        />
 
-        <Pressable
-          onPress={handleNewPost}
-          hitSlop={8}
-          style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.6 }]}
-        >
-          <Ionicons name="add-circle-outline" size={26} color={colors.accent} />
-        </Pressable>
+        <View style={styles.headerSpacer} />
 
-        <Pressable
-          onPress={handleProfile}
-          hitSlop={8}
-          style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.6 }]}
-        >
-          <Ionicons
-            name={user ? 'person-circle' : 'person-circle-outline'}
-            size={26}
-            color={user ? colors.accent : colors.textSecondary}
-          />
-        </Pressable>
+        <ProfileButton user={user} size={30} onPress={handleProfile} />
       </View>
 
-      {/* ── Search bar ── */}
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={16} color={colors.textSecondary} style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder={t('common.search') + '...'}
-          placeholderTextColor={colors.textSecondary}
-          value={searchText}
-          onChangeText={setSearchText}
-          returnKeyType="search"
-          clearButtonMode="while-editing"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        {isSearching && (
-          <Pressable onPress={() => setSearchText('')} hitSlop={8}>
-            <Ionicons name="close-circle" size={17} color={colors.textSecondary} />
-          </Pressable>
-        )}
-      </View>
+      {/* Dashboard */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {SECTIONS.map((section) => {
+          const accent = COLORS[section.key];
+          const tiles = section.tiles;
+          const spacers = Math.max(0, 3 - tiles.length);
 
-      {/* ── Feed ── */}
-      {isError ? (
-        <View style={styles.center}>
-          <Ionicons name="cloud-offline-outline" size={48} color={colors.border} />
-          <Body style={styles.errorText}>{t('home.feed.loadError')}</Body>
-          <Pressable
-            onPress={() => refetch()}
-            style={({ pressed }) => [styles.retryBtn, pressed && { opacity: 0.7 }]}
-          >
-            <Body style={styles.retryText}>{t('common.retry')}</Body>
-          </Pressable>
-        </View>
-      ) : (
-        <FlatList
-          data={posts ?? []}
-          keyExtractor={keyExtractor}
-          renderItem={renderPost}
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + spacing.xl }]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          refreshControl={
-            !isSearching
-              ? <RefreshControl
-                  refreshing={isRefetching}
-                  onRefresh={refetch}
-                  tintColor={colors.accent}
-                  colors={[colors.accent]}
-                />
-              : undefined
-          }
-          ListHeaderComponent={<View style={{ height: 1 }} />}
-          ListEmptyComponent={
-            isLoading
-              ? <ActivityIndicator style={styles.loader} color={colors.accent} size="large" />
-              : isEmpty && isSearching
-              ? (
-                <View style={styles.emptyState}>
-                  <Ionicons name="search-outline" size={48} color={colors.border} />
-                  <Caption style={styles.emptyText}>{t('common.noResults')}</Caption>
-                </View>
-              )
-              : isEmpty
-              ? (
-                <View style={styles.emptyState}>
-                  <Ionicons name="images-outline" size={56} color={colors.border} />
-                  <Caption style={styles.emptyText}>{t('home.feed.empty')}</Caption>
-                  <Pressable
-                    onPress={handleNewPost}
-                    style={({ pressed }) => [styles.emptyBtn, pressed && { opacity: 0.7 }]}
-                  >
-                    <Body style={styles.emptyBtnText}>{t('gallery.newPost')}</Body>
-                  </Pressable>
-                </View>
-              )
-              : null
-          }
-        />
-      )}
+          return (
+            <View key={section.key} style={styles.section}>
+              {/* Section header */}
+              <View style={styles.sectionHeader}>
+                <View style={[styles.sectionBar, { backgroundColor: accent }]} />
+                <Label style={[styles.sectionTitle, { color: accent }]}>
+                  {t(section.titleKey)}
+                </Label>
+              </View>
 
-      {/* Sidebar */}
+              {/* Tiles row */}
+              <View style={styles.tileRow}>
+                {tiles.map((tile) => (
+                  <Tile
+                    key={tile.labelKey}
+                    icon={tile.icon}
+                    label={t(tile.labelKey)}
+                    accent={accent}
+                    comingSoon={tile.comingSoon}
+                    onPress={tile.route ? () => router.push(tile.route as any) : undefined}
+                  />
+                ))}
+                {Array.from({ length: spacers }).map((_, i) => (
+                  <View key={`sp-${i}`} style={styles.tileSpacer} />
+                ))}
+              </View>
+            </View>
+          );
+        })}
+      </ScrollView>
+
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} currentRoute="/" />
     </View>
   );
 }
 
+// ─── Tile ─────────────────────────────────────────────────────────────────────
+
+interface TileProps {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  accent: string;
+  comingSoon?: boolean;
+  onPress?: () => void;
+}
+
+function Tile({ icon, label, accent, comingSoon, onPress }: TileProps) {
+  return (
+    <Pressable
+      onPress={comingSoon ? undefined : onPress}
+      style={({ pressed }) => [
+        styles.tile,
+        { borderColor: accent + '33' },
+        pressed && !comingSoon && { backgroundColor: accent + '12' },
+        comingSoon && styles.tileDisabled,
+      ]}
+    >
+      <View style={[styles.tileIconWrap, { backgroundColor: accent + '18' }]}>
+        <Ionicons name={icon} size={30} color={accent} />
+      </View>
+      <Body style={styles.tileLabel} numberOfLines={2}>{label}</Body>
+      {comingSoon && (
+        <Caption style={styles.tileSoonBadge}>{' '}</Caption>
+      )}
+    </Pressable>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
+  screen: {
+    flex: 1,
+    backgroundColor: colors.bg,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -215,33 +209,77 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     backgroundColor: colors.surface,
   },
-  headerTitle: { flex: 1, fontSize: 20, marginLeft: spacing.xs },
-  iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  searchBar: {
+  iconBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerSpacer: {
+    flex: 1,
+  },
+  scroll: { flex: 1 },
+  content: {
+    padding: spacing.md,
+    gap: spacing.xl,
+  },
+  section: {
+    gap: spacing.sm,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    marginBottom: spacing.xs,
   },
-  searchIcon: { flexShrink: 0 },
-  searchInput: {
+  sectionBar: {
+    width: 3,
+    height: 16,
+    borderRadius: 2,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    letterSpacing: 1.2,
+  },
+  tileRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  tile: {
     flex: 1,
-    fontSize: 15,
-    color: colors.textPrimary,
-    paddingVertical: 6,
+    backgroundColor: colors.surface,
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 108,
+    justifyContent: 'center',
   },
-  list: { flexGrow: 1 },
-  loader: { marginTop: spacing.xl * 2 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
-  errorText: { color: colors.textSecondary, textAlign: 'center' },
-  retryBtn: { borderWidth: 1, borderColor: colors.accent, borderRadius: 8, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
-  retryText: { color: colors.accent, fontWeight: '600' },
-  emptyState: { alignItems: 'center', justifyContent: 'center', gap: spacing.md, marginTop: spacing.xl * 2, paddingHorizontal: spacing.xl },
-  emptyText: { color: colors.textSecondary, textAlign: 'center', fontSize: 15, lineHeight: 22 },
-  emptyBtn: { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: spacing.xl, paddingVertical: 12 },
-  emptyBtnText: { color: colors.surface, fontWeight: '700', fontSize: 15 },
+  tileDisabled: {
+    opacity: 0.38,
+  },
+  tileIconWrap: {
+    width: 54,
+    height: 54,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tileLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: colors.textPrimary,
+    lineHeight: 16,
+  },
+  tileSoonBadge: {
+    fontSize: 9,
+    color: colors.textSecondary,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  tileSpacer: {
+    flex: 1,
+  },
 });

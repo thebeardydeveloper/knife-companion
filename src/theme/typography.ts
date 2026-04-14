@@ -6,13 +6,13 @@ export const typography = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: colors.textPrimary,
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
   h2: {
     fontSize: 22,
     fontWeight: '600',
     color: colors.textPrimary,
-    letterSpacing: -0.3,
+    letterSpacing: -0.8,
   },
   h3: {
     fontSize: 17,
@@ -35,7 +35,7 @@ export const typography = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: colors.textSecondary,
-    letterSpacing: 0.5,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
 });

@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
-import { Platform, View, StyleSheet } from 'react-native';
+import { Platform, View, StyleSheet, StatusBar } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient } from '@tanstack/react-query';
@@ -12,6 +12,7 @@ import { paperTheme, colors } from '../src/theme';
 import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
 import { supabase } from '../src/lib/supabase';
+import { registerPushToken } from '../src/lib/notifications';
 
 const webStyles = StyleSheet.create({
   container: {
@@ -77,6 +78,9 @@ export default function RootLayout() {
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        registerPushToken(session.user.id);
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -94,11 +98,19 @@ export default function RootLayout() {
       <Stack.Screen name="new-post" options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="profile" />
       <Stack.Screen name="post/[id]" />
+      <Stack.Screen name="post/edit/[id]" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="user/[id]" />
+      <Stack.Screen name="privacy" options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="artisans/index" />
+      <Stack.Screen name="artisans/search" />
+      <Stack.Screen name="suppliers/by-name" />
+      <Stack.Screen name="suppliers/by-material" />
     </Stack>
   );
 
   return (
     <SafeAreaProvider>
+      <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
       <PersistQueryClientProvider
         client={queryClient}
         persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 * 7 }}

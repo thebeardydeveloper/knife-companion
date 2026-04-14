@@ -1,12 +1,13 @@
 export const colors = {
-  bg: '#F5F2EE',
-  surface: '#FFFFFF',
-  textPrimary: '#1C1A17',
-  textSecondary: '#6B6560',
-  accent: '#C4822A',
-  accentLight: '#F0D9BB',
-  border: '#D9D5CF',
-  error: '#B91C1C',
+  bg: '#0F0E0D',
+  surface: '#1A1917',
+  surfaceElevated: '#242220',
+  textPrimary: '#F2EDE6',
+  textSecondary: '#8A837A',
+  accent: '#E8571A',
+  accentLight: '#2A1A10',
+  border: '#2C2A27',
+  error: '#E03131',
 } as const;
 
 export type AppColors = typeof colors;
