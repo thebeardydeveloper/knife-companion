@@ -23,6 +23,10 @@ const COLORS = {
 
 type SectionKey = keyof typeof COLORS;
 
+// Tile fixed dimensions — calculated at render time from screen width
+const TILE_COLS = 3;
+const TILE_H = 128; // fixed height fits icon(54) + gap(8) + label(32) + padding(32) + 2
+
 // ─── Section + tile definitions ──────────────────────────────────────────────
 
 interface TileDef {
@@ -84,6 +88,9 @@ export default function DashboardScreen() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const logoWidth = screenWidth * 0.38;
+  const tileW = Math.floor(
+    (screenWidth - spacing.md * 2 - spacing.sm * (TILE_COLS - 1)) / TILE_COLS
+  );
 
   function handleProfile() {
     if (!user) router.push('/login' as any);
@@ -143,11 +150,12 @@ export default function DashboardScreen() {
                     label={t(tile.labelKey)}
                     accent={accent}
                     comingSoon={tile.comingSoon}
+                    size={tileW}
                     onPress={tile.route ? () => router.push(tile.route as any) : undefined}
                   />
                 ))}
                 {Array.from({ length: spacers }).map((_, i) => (
-                  <View key={`sp-${i}`} style={styles.tileSpacer} />
+                  <View key={`sp-${i}`} style={{ width: tileW }} />
                 ))}
               </View>
             </View>
@@ -166,17 +174,18 @@ interface TileProps {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
   accent: string;
+  size: number;
   comingSoon?: boolean;
   onPress?: () => void;
 }
 
-function Tile({ icon, label, accent, comingSoon, onPress }: TileProps) {
+function Tile({ icon, label, accent, size, comingSoon, onPress }: TileProps) {
   return (
     <Pressable
       onPress={comingSoon ? undefined : onPress}
       style={({ pressed }) => [
         styles.tile,
-        { borderColor: accent + '33' },
+        { width: size, height: TILE_H, borderColor: accent + '33' },
         pressed && !comingSoon && { backgroundColor: accent + '12' },
         comingSoon && styles.tileDisabled,
       ]}
@@ -185,9 +194,6 @@ function Tile({ icon, label, accent, comingSoon, onPress }: TileProps) {
         <Ionicons name={icon} size={30} color={accent} />
       </View>
       <Body style={styles.tileLabel} numberOfLines={2}>{label}</Body>
-      {comingSoon && (
-        <Caption style={styles.tileSoonBadge}>{' '}</Caption>
-      )}
     </Pressable>
   );
 }
@@ -246,15 +252,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   tile: {
-    flex: 1,
+    // width + height set dynamically via size prop
     backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
     padding: spacing.md,
     alignItems: 'center',
-    gap: spacing.sm,
-    minHeight: 108,
     justifyContent: 'center',
+    gap: spacing.sm,
   },
   tileDisabled: {
     opacity: 0.38,
@@ -272,14 +277,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: colors.textPrimary,
     lineHeight: 16,
-  },
-  tileSoonBadge: {
-    fontSize: 9,
-    color: colors.textSecondary,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  tileSpacer: {
-    flex: 1,
+    height: 32, // reserve exactly 2 lines — prevents height variance
   },
 });
