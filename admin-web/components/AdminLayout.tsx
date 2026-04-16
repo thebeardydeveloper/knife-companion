@@ -6,8 +6,9 @@ import { useAdminAuth } from '@/lib/useAdminAuth';
 import { supabase } from '@/lib/supabase';
 
 const NAV = [
-  { href: '/announcements', label: 'Novedades', icon: '🔔' },
-  // Futuras secciones se agregan acá
+  { href: '/announcements', label: 'Novedades',  icon: '🔔' },
+  { href: '/news',          label: 'Noticias',   icon: '📰' },
+  { href: '/posts',         label: 'Posts',      icon: '🖼️' },
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {

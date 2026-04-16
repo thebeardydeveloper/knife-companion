@@ -13,6 +13,16 @@ export interface Announcement {
   body: string;
   type: AnnouncementType;
   post_id: string | null;
+  news_id: string | null;
+  published_at: string | null;
+  created_at: string;
+}
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  body_html: string;
+  cover_url: string | null;
   published_at: string | null;
   created_at: string;
 }

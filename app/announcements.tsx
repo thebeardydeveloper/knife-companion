@@ -131,7 +131,7 @@ export default function AnnouncementsScreen() {
     queryFn: async () => {
       const { data } = await supabase
         .from('announcements')
-        .select('id, title, body, type, post_id, published_at')
+        .select('id, title, body, type, post_id, news_id, published_at')
         .not('published_at', 'is', null)
         .order('published_at', { ascending: false });
       return (data as Announcement[]) ?? [];
@@ -153,6 +153,8 @@ export default function AnnouncementsScreen() {
   const handlePress = useCallback((item: Announcement) => {
     if (item.post_id) {
       router.push(`/post/${item.post_id}` as any);
+    } else if (item.news_id) {
+      router.push(`/news/${item.news_id}` as any);
     }
   }, [router]);
 

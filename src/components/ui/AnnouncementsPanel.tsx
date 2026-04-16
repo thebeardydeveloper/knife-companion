@@ -20,6 +20,7 @@ export interface Announcement {
   body: string;
   type: 'update' | 'event' | 'feature' | 'news';
   post_id: string | null;
+  news_id: string | null;
   published_at: string;
 }
 
@@ -152,7 +153,7 @@ export function AnnouncementsPanel({ visible, onClose, onUnreadCountChange }: Pr
     queryFn: async () => {
       const { data } = await supabase
         .from('announcements')
-        .select('id, title, body, type, post_id, published_at')
+        .select('id, title, body, type, post_id, news_id, published_at')
         .not('published_at', 'is', null)
         .order('published_at', { ascending: false });
       return (data as Announcement[]) ?? [];
@@ -178,6 +179,9 @@ export function AnnouncementsPanel({ visible, onClose, onUnreadCountChange }: Pr
     if (item.post_id) {
       onClose();
       router.push(`/post/${item.post_id}` as any);
+    } else if (item.news_id) {
+      onClose();
+      router.push(`/news/${item.news_id}` as any);
     }
   }, [onClose, router]);
 
