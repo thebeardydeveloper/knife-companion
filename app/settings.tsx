@@ -1,4 +1,4 @@
-import { View, StyleSheet, Pressable, Linking } from 'react-native';
+import { View, StyleSheet, Pressable, Linking, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { H1, H2, Body, Caption } from '../src/components/ui';
 import { useLanguage } from '../src/hooks/useLanguage';
+import { useAppStore } from '../src/store/useAppStore';
+import { registerPushToken } from '../src/lib/notifications';
 import { colors, spacing } from '../src/theme';
 import type { Language } from '../src/i18n/index';
 
@@ -19,6 +21,21 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { language, setLanguage } = useLanguage();
+  const user = useAppStore((s) => s.user);
+
+  async function handleEnableNotifications() {
+    if (!user) {
+      Alert.alert('', t('settings.notificationsSignInRequired'));
+      return;
+    }
+    if (Platform.OS === 'web') return;
+    try {
+      await registerPushToken(user.id);
+      Alert.alert('✓', t('settings.notificationsEnabled'));
+    } catch {
+      Alert.alert('Error', t('settings.notificationsError'));
+    }
+  }
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -58,6 +75,22 @@ export default function SettingsScreen() {
           })}
         </View>
       </View>
+
+      {/* Notifications section — native only */}
+      {Platform.OS !== 'web' && (
+        <View style={styles.section}>
+          <H2 style={styles.sectionLabel}>{t('settings.notifications')}</H2>
+          <View style={styles.optionsGroup}>
+            <Pressable
+              style={[styles.option, styles.optionLast, styles.optionRow]}
+              onPress={handleEnableNotifications}
+            >
+              <Body style={styles.optionText}>{t('settings.enableNotifications')}</Body>
+              <Ionicons name="notifications-outline" size={18} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       {/* About section */}
       <View style={styles.section}>

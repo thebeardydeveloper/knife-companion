@@ -19,40 +19,63 @@ if (Platform.OS !== 'web') {
  * Debe llamarse después de que el usuario inicia sesión.
  */
 export async function registerPushToken(userId: string): Promise<void> {
-  if (!Device.isDevice) return; // No funciona en simulador
-  if (Platform.OS === 'web') return;
+  try {
+    if (!Device.isDevice) {
+      console.log('[PushToken] Skipped: not a physical device');
+      return;
+    }
+    if (Platform.OS === 'web') return;
 
-  const { status: existing } = await Notifications.getPermissionsAsync();
-  let finalStatus = existing;
+    const { status: existing } = await Notifications.getPermissionsAsync();
+    let finalStatus = existing;
+    console.log('[PushToken] Permission status:', existing);
 
-  if (existing !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
+    if (existing !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+      console.log('[PushToken] Permission after request:', status);
+    }
+
+    if (finalStatus !== 'granted') {
+      console.log('[PushToken] Permission denied, aborting');
+      return;
+    }
+
+    // En Android se requiere un canal
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+      });
+    }
+
+    const projectId = process.env.EXPO_PUBLIC_PROJECT_ID;
+    console.log('[PushToken] Using projectId:', projectId);
+
+    const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+    const token = tokenData.data;
+    console.log('[PushToken] Token obtained:', token);
+
+    if (!token) {
+      console.warn('[PushToken] No token returned');
+      return;
+    }
+
+    // Upsert: un usuario puede tener múltiples dispositivos
+    const { error } = await supabase.from('push_tokens').upsert(
+      { user_id: userId, token, platform: Platform.OS },
+      { onConflict: 'token' }
+    );
+
+    if (error) {
+      console.error('[PushToken] Supabase upsert error:', error.message);
+    } else {
+      console.log('[PushToken] Token saved successfully for user', userId);
+    }
+  } catch (err) {
+    console.error('[PushToken] Unexpected error:', err);
   }
-
-  if (finalStatus !== 'granted') return;
-
-  // En Android se requiere un canal
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-    });
-  }
-
-  const tokenData = await Notifications.getExpoPushTokenAsync({
-    projectId: process.env.EXPO_PUBLIC_PROJECT_ID,
-  });
-
-  const token = tokenData.data;
-  if (!token) return;
-
-  // Upsert: un usuario puede tener múltiples dispositivos
-  await supabase.from('push_tokens').upsert(
-    { user_id: userId, token, platform: Platform.OS },
-    { onConflict: 'token' }
-  );
 }
 
 /**

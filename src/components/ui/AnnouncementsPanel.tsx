@@ -130,7 +130,15 @@ export function AnnouncementsPanel({ visible, onClose, onUnreadCountChange }: Pr
   const [readIds,      setReadIds]      = useState<Set<string>>(new Set());
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
-  // Load persisted state when panel opens
+  // Load persisted state on mount so the badge count is accurate immediately
+  useEffect(() => {
+    Promise.all([getReadIds(), getDismissedIds()]).then(([r, d]) => {
+      setReadIds(r);
+      setDismissedIds(d);
+    });
+  }, []);
+
+  // Reload when panel opens in case state changed elsewhere (e.g. announcements screen)
   useEffect(() => {
     if (!visible) return;
     Promise.all([getReadIds(), getDismissedIds()]).then(([r, d]) => {
