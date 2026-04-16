@@ -206,6 +206,19 @@ export const es: Translations = {
     save: 'Guardar',
     posts: 'publicaciones',
     tapToChange: 'Tocá para cambiar',
+    followers: 'seguidores',
+    following: 'siguiendo',
+  },
+  follow: {
+    follow: 'Seguir',
+    unfollow: 'Dejar de seguir',
+    followers: 'Seguidores',
+    following: 'Siguiendo',
+  },
+  announcements: {
+    title: 'Novedades',
+    empty: 'No hay novedades por ahora.',
+    viewAll: 'Ver todas',
   },
   post: {
     edit: 'Editar publicación',

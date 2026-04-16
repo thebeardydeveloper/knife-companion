@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #0F0E0D;
+  color: #F2EDE6;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #1A1917; }
+::-webkit-scrollbar-thumb { background: #2C2A27; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3C3A37; }
+
+/* Textarea / input reset */
+textarea, input, select {
+  outline: none;
+}

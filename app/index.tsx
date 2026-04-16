@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Body, Caption, Label } from '../src/components/ui';
 import { Sidebar } from '../src/components/ui/Sidebar';
 import { ProfileButton } from '../src/components/ui/ProfileButton';
+import { NotificationBell } from '../src/components/ui/NotificationBell';
 import { useAppStore } from '../src/store/useAppStore';
 import { colors, spacing } from '../src/theme';
 
@@ -117,6 +118,7 @@ export default function DashboardScreen() {
 
         <View style={styles.headerSpacer} />
 
+        <NotificationBell size={26} />
         <ProfileButton user={user} size={30} onPress={handleProfile} />
       </View>
 

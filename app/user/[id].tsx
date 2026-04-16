@@ -4,11 +4,12 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import { H1, H3, Body, Caption } from '../../src/components/ui';
+import { H1, H3, Body, Caption, Label } from '../../src/components/ui';
 import { PostCard } from '../../src/components/gallery/PostCard';
 import { supabase } from '../../src/lib/supabase';
+import { useAppStore } from '../../src/store/useAppStore';
 import { colors, spacing } from '../../src/theme';
 import type { Post, Profile } from '../../src/lib/supabase';
 
@@ -19,6 +20,10 @@ export default function UserProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const currentUser = useAppStore((s) => s.user);
+  const queryClient = useQueryClient();
+
+  const isOwnProfile = currentUser?.id === id;
 
   const { data: profile, isLoading: profileLoading } = useQuery<Profile | null>({
     queryKey: ['public-profile', id],
@@ -42,6 +47,69 @@ export default function UserProfileScreen() {
     staleTime: 1000 * 60 * 2,
   });
 
+  // Follower / following counts
+  const { data: followerCount = 0 } = useQuery<number>({
+    queryKey: ['follower-count', id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', id);
+      return count ?? 0;
+    },
+    staleTime: 1000 * 60,
+  });
+
+  const { data: followingCount = 0 } = useQuery<number>({
+    queryKey: ['following-count', id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', id);
+      return count ?? 0;
+    },
+    staleTime: 1000 * 60,
+  });
+
+  // Is the current user following this profile?
+  const { data: isFollowing = false } = useQuery<boolean>({
+    queryKey: ['is-following', currentUser?.id, id],
+    queryFn: async () => {
+      if (!currentUser) return false;
+      const { data } = await supabase
+        .from('follows')
+        .select('follower_id')
+        .eq('follower_id', currentUser.id)
+        .eq('following_id', id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!currentUser && !isOwnProfile,
+    staleTime: 1000 * 30,
+  });
+
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUser) return;
+      if (isFollowing) {
+        await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', currentUser.id)
+          .eq('following_id', id);
+      } else {
+        await supabase
+          .from('follows')
+          .insert({ follower_id: currentUser.id, following_id: id });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['is-following', currentUser?.id, id] });
+      queryClient.invalidateQueries({ queryKey: ['follower-count', id] });
+    },
+  });
+
   const username = profile?.username ?? '...';
   const initials = username.slice(0, 2).toUpperCase();
   const postCount = posts?.length ?? 0;
@@ -59,6 +127,7 @@ export default function UserProfileScreen() {
             )
           }
         </View>
+
         <View style={styles.profileInfo}>
           {profileLoading
             ? <ActivityIndicator color={colors.accent} />
@@ -66,12 +135,53 @@ export default function UserProfileScreen() {
               <>
                 <H3 style={styles.username}>{username}</H3>
                 {!!profile?.bio && <Body style={styles.bio}>{profile.bio}</Body>}
-                <Caption style={styles.postCount}>{postCount} {t('profile.posts')}</Caption>
+
+                {/* Stats row */}
+                <View style={styles.statsRow}>
+                  <View style={styles.statItem}>
+                    <Label style={styles.statNumber}>{postCount}</Label>
+                    <Caption style={styles.statLabel}>{t('profile.posts')}</Caption>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statItem}>
+                    <Label style={styles.statNumber}>{followerCount}</Label>
+                    <Caption style={styles.statLabel}>{t('profile.followers')}</Caption>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statItem}>
+                    <Label style={styles.statNumber}>{followingCount}</Label>
+                    <Caption style={styles.statLabel}>{t('profile.following')}</Caption>
+                  </View>
+                </View>
               </>
             )
           }
         </View>
       </View>
+
+      {/* Follow button — only show for other users when logged in */}
+      {!isOwnProfile && currentUser && (
+        <View style={styles.followRow}>
+          <Pressable
+            onPress={() => followMutation.mutate()}
+            disabled={followMutation.isPending}
+            style={({ pressed }) => [
+              styles.followBtn,
+              isFollowing && styles.followBtnOutline,
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            {followMutation.isPending
+              ? <ActivityIndicator size="small" color={isFollowing ? colors.accent : '#fff'} />
+              : (
+                <Label style={[styles.followBtnText, isFollowing && styles.followBtnTextOutline]}>
+                  {isFollowing ? t('follow.unfollow') : t('follow.follow')}
+                </Label>
+              )
+            }
+          </Pressable>
+        </View>
+      )}
 
       <View style={styles.sectionHeader}>
         <Caption style={styles.sectionLabel}>{t('profile.myPosts').toUpperCase()}</Caption>
@@ -130,7 +240,7 @@ const styles = StyleSheet.create({
   iconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   profileCard: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
     backgroundColor: colors.surface,
     padding: spacing.lg,
@@ -148,10 +258,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitials: { color: colors.accent, fontWeight: '700', fontSize: 22 },
-  profileInfo: { flex: 1, gap: 4 },
+  profileInfo: { flex: 1, gap: 6 },
   username: { color: colors.textPrimary, fontSize: 18 },
   bio: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
-  postCount: { color: colors.textSecondary, fontSize: 12 },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: spacing.sm,
+  },
+  statItem: { alignItems: 'center', gap: 1 },
+  statNumber: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
+  statLabel: { color: colors.textSecondary, fontSize: 11 },
+  statDivider: { width: 1, height: 20, backgroundColor: colors.border, marginHorizontal: 2 },
+  followRow: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  followBtn: {
+    backgroundColor: colors.accent,
+    borderRadius: 8,
+    paddingVertical: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 38,
+  },
+  followBtnOutline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  followBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  followBtnTextOutline: { color: colors.accent },
   sectionHeader: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,

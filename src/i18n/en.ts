@@ -204,6 +204,19 @@ export const en = {
     save: 'Save',
     posts: 'posts',
     tapToChange: 'Tap to change',
+    followers: 'followers',
+    following: 'following',
+  },
+  follow: {
+    follow: 'Follow',
+    unfollow: 'Unfollow',
+    followers: 'Followers',
+    following: 'Following',
+  },
+  announcements: {
+    title: 'Notifications',
+    empty: 'No notifications yet.',
+    viewAll: 'View all',
   },
   post: {
     edit: 'Edit post',

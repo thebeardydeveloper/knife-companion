@@ -87,6 +87,34 @@ export default function ProfileScreen() {
     staleTime: 1000 * 60 * 2,
   });
 
+  const { data: followerCount = 0 } = useQuery<number>({
+    queryKey: ['follower-count', user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', user.id);
+      return count ?? 0;
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: followingCount = 0 } = useQuery<number>({
+    queryKey: ['following-count', user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', user.id);
+      return count ?? 0;
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60,
+  });
+
   // ── Avatar mutation ───────────────────────────────────────────────────────
 
   const avatarMutation = useMutation({
@@ -218,9 +246,22 @@ export default function ProfileScreen() {
         <View style={styles.profileInfo}>
           <H3 style={styles.username}>{profile?.username ?? user.email}</H3>
           <Caption style={styles.emailText}>{user.email}</Caption>
-          <Caption style={styles.postCount}>
-            {postCount} {t('profile.posts')}
-          </Caption>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Label style={styles.statNumber}>{postCount}</Label>
+              <Caption style={styles.statLabel}>{t('profile.posts')}</Caption>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Label style={styles.statNumber}>{followerCount}</Label>
+              <Caption style={styles.statLabel}>{t('profile.followers')}</Caption>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Label style={styles.statNumber}>{followingCount}</Label>
+              <Caption style={styles.statLabel}>{t('profile.following')}</Caption>
+            </View>
+          </View>
         </View>
       </View>
 
@@ -377,10 +418,19 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.surface,
   },
-  profileInfo: { flex: 1, gap: 2 },
+  profileInfo: { flex: 1, gap: 4 },
   username: { color: colors.textPrimary, fontSize: 18 },
   emailText: { color: colors.textSecondary, fontSize: 13 },
-  postCount: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: 2,
+  },
+  statItem: { alignItems: 'center', gap: 1 },
+  statNumber: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
+  statLabel: { color: colors.textSecondary, fontSize: 11 },
+  statDivider: { width: 1, height: 20, backgroundColor: colors.border, marginHorizontal: 2 },
 
   // Bio
   bioSection: {

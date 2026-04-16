@@ -105,6 +105,7 @@ export default function RootLayout() {
       <Stack.Screen name="artisans/search" />
       <Stack.Screen name="suppliers/by-name" />
       <Stack.Screen name="suppliers/by-material" />
+      <Stack.Screen name="announcements" options={{ animation: 'slide_from_right' }} />
     </Stack>
   );
 
