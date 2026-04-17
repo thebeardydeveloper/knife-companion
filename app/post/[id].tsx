@@ -10,6 +10,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { H3, Body, Caption, Label } from '../../src/components/ui';
+import { UserBadges } from '../../src/components/ui/UserBadges';
+import { useRankTiers } from '../../src/hooks/useRankTiers';
 import { supabase } from '../../src/lib/supabase';
 import { useAppStore } from '../../src/store/useAppStore';
 import { colors, spacing } from '../../src/theme';
@@ -18,7 +20,11 @@ import type { Post, PostComment } from '../../src/lib/supabase';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 async function fetchPost(id: string): Promise<Post> {
-  const { data, error } = await supabase.from('posts').select('*').eq('id', id).single();
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*, profiles(username, avatar_url, role, post_count)')
+    .eq('id', id)
+    .single();
   if (error) throw error;
   return data as Post;
 }
@@ -34,6 +40,7 @@ export default function PostDetailScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [commentText, setCommentText] = useState('');
   const commentInputRef = useRef<TextInput>(null);
+  const { data: rankTiers = [] } = useRankTiers();
 
   const { data: post, isLoading, isError, refetch, isRefetching } = useQuery<Post>({
     queryKey: ['post', id],
@@ -263,6 +270,33 @@ export default function PostDetailScreen() {
 
         {/* ── Body ── */}
         <View style={st.body}>
+          {/* Author */}
+          {post.profiles && (
+            <Pressable
+              onPress={() => router.push(`/user/${post.user_id}` as any)}
+              style={({ pressed }) => [st.authorRow, pressed && { opacity: 0.7 }]}
+            >
+              <View style={st.authorAvatar}>
+                {post.profiles.avatar_url
+                  ? <Image source={{ uri: post.profiles.avatar_url }} style={st.authorAvatarImg} />
+                  : <Caption style={st.authorInitials}>
+                      {(post.profiles.username ?? 'U').slice(0, 2).toUpperCase()}
+                    </Caption>
+                }
+              </View>
+              <View style={st.authorInfo}>
+                <Body style={st.authorName}>{post.profiles.username}</Body>
+                <UserBadges
+                  role={post.profiles.role}
+                  postCount={post.profiles.post_count}
+                  tiers={rankTiers}
+                  size="sm"
+                />
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
+            </Pressable>
+          )}
+
           {/* Description */}
           {!!post.description && <H3 style={st.title}>{post.description}</H3>}
 
@@ -455,6 +489,12 @@ const st = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
   dotActive: { backgroundColor: '#fff', width: 18 },
   body: { padding: spacing.md, gap: spacing.md },
+  authorRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderRadius: 10, padding: spacing.sm, borderWidth: 1, borderColor: colors.border },
+  authorAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.accentLight, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  authorAvatarImg: { width: 36, height: 36 },
+  authorInitials: { color: colors.accent, fontWeight: '700', fontSize: 13 },
+  authorInfo: { flex: 1, gap: 3 },
+  authorName: { color: colors.textPrimary, fontWeight: '600', fontSize: 13 },
   title: { color: colors.textPrimary, fontSize: 20, lineHeight: 28, fontWeight: '700' },
   likesRow: { flexDirection: 'row', alignItems: 'center' },
   likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: spacing.xs, paddingRight: spacing.md },

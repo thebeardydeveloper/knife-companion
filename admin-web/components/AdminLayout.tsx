@@ -9,6 +9,7 @@ const NAV = [
   { href: '/announcements', label: 'Novedades',  icon: '🔔' },
   { href: '/news',          label: 'Noticias',   icon: '📰' },
   { href: '/posts',         label: 'Posts',      icon: '🖼️' },
+  { href: '/ranks',         label: 'Rangos',     icon: '🏆' },
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {

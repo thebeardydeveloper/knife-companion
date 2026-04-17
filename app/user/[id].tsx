@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { H1, H3, Body, Caption, Label } from '../../src/components/ui';
+import { UserBadges } from '../../src/components/ui/UserBadges';
+import { useRankTiers } from '../../src/hooks/useRankTiers';
 import { PostCard } from '../../src/components/gallery/PostCard';
 import { supabase } from '../../src/lib/supabase';
 import { useAppStore } from '../../src/store/useAppStore';
@@ -39,7 +41,7 @@ export default function UserProfileScreen() {
     queryFn: async () => {
       const { data } = await supabase
         .from('posts')
-        .select('*, profiles(username, avatar_url)')
+        .select('*, profiles(username, avatar_url, role, post_count)')
         .eq('user_id', id)
         .order('created_at', { ascending: false });
       return (data as Post[]) ?? [];
@@ -110,6 +112,7 @@ export default function UserProfileScreen() {
     },
   });
 
+  const { data: rankTiers = [] } = useRankTiers();
   const username = profile?.username ?? '...';
   const initials = username.slice(0, 2).toUpperCase();
   const postCount = posts?.length ?? 0;
@@ -135,6 +138,12 @@ export default function UserProfileScreen() {
               <>
                 <H3 style={styles.username}>{username}</H3>
                 {!!profile?.bio && <Body style={styles.bio}>{profile.bio}</Body>}
+                <UserBadges
+                  role={profile?.role}
+                  postCount={profile?.post_count}
+                  tiers={rankTiers}
+                  size="md"
+                />
 
                 {/* Stats row */}
                 <View style={styles.statsRow}>

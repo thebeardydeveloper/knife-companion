@@ -27,7 +27,7 @@ const PAGE_SIZE = 10;
 async function fetchFeed(search: string | undefined, page: number): Promise<Post[]> {
   let query = supabase
     .from('posts')
-    .select('*, profiles(username, avatar_url)')
+    .select('*, profiles(username, avatar_url, role, post_count)')
     .order('created_at', { ascending: false })
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 

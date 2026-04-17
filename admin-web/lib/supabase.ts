@@ -26,3 +26,11 @@ export interface NewsArticle {
   published_at: string | null;
   created_at: string;
 }
+
+export interface RankTier {
+  id: number;
+  name: string;
+  min_posts: number;
+  color: string;
+  sort_order: number;
+}

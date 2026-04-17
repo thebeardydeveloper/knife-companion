@@ -3,6 +3,8 @@ import { View, StyleSheet, Image, Pressable, ScrollView, NativeSyntheticEvent, N
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Body, Caption } from '../ui/Typography';
+import { UserBadges } from '../ui/UserBadges';
+import { useRankTiers } from '../../hooks/useRankTiers';
 import { colors, spacing } from '../../theme';
 import type { Post } from '../../lib/supabase';
 
@@ -26,6 +28,7 @@ export function PostCard({ post }: Props) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
+  const { data: rankTiers = [] } = useRankTiers();
 
   const allImages: string[] = post.image_urls?.length
     ? post.image_urls
@@ -120,6 +123,12 @@ export function PostCard({ post }: Props) {
             <View style={styles.authorInfo}>
               <Body style={styles.authorName}>{username}</Body>
               <Caption style={styles.timestamp}>{timeAgo(post.created_at)}</Caption>
+              <UserBadges
+                role={post.profiles?.role}
+                postCount={post.profiles?.post_count}
+                tiers={rankTiers}
+                size="sm"
+              />
             </View>
           </Pressable>
         </View>

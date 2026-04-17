@@ -19,6 +19,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 import { Ionicons } from '@expo/vector-icons';
 import { H1, H3, Body, Caption, Label } from '../src/components/ui';
+import { UserBadges } from '../src/components/ui/UserBadges';
+import { useRankTiers } from '../src/hooks/useRankTiers';
 import { supabase } from '../src/lib/supabase';
 import { unregisterPushToken } from '../src/lib/notifications';
 import { useAppStore } from '../src/store/useAppStore';
@@ -58,6 +60,7 @@ export default function ProfileScreen() {
   const [editingBio, setEditingBio] = useState(false);
   const [bioText, setBioText] = useState('');
   const bioRef = useRef<TextInput>(null);
+  const { data: rankTiers = [] } = useRankTiers();
 
   // ── Queries ──────────────────────────────────────────────────────────────
 
@@ -78,7 +81,7 @@ export default function ProfileScreen() {
       if (!user) return [];
       const { data } = await supabase
         .from('posts')
-        .select('*, profiles(username, avatar_url)')
+        .select('*, profiles(username, avatar_url, role, post_count)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       return (data as Post[]) ?? [];
@@ -148,6 +151,21 @@ export default function ProfileScreen() {
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
     },
     onError: () => Alert.alert('Error', 'Could not save bio. Try again.'),
+  });
+
+  // ── Role mutation ─────────────────────────────────────────────────────────
+
+  const roleMutation = useMutation({
+    mutationFn: async (role: Profile['role']) => {
+      if (!user) return;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role })
+        .eq('id', user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile', user?.id] }),
+    onError: () => Alert.alert('Error', 'Could not update role. Try again.'),
   });
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -309,6 +327,45 @@ export default function ProfileScreen() {
         )}
       </View>
 
+      {/* Role & Rank section */}
+      <View style={styles.roleSection}>
+        {/* Rank badge (read-only) */}
+        <View style={styles.rankRow}>
+          <Caption style={styles.roleSectionLabel}>{t('profile.rank').toUpperCase()}</Caption>
+          <UserBadges
+            postCount={profile?.post_count ?? 0}
+            tiers={rankTiers}
+            size="md"
+          />
+        </View>
+
+        {/* Role picker */}
+        <View style={styles.rolePickerRow}>
+          <Caption style={styles.roleSectionLabel}>{t('profile.roles.label').toUpperCase()}</Caption>
+          <View style={styles.roleBtns}>
+            {(['artisan', 'collector', 'enthusiast'] as const).map((r) => {
+              const isActive = profile?.role === r;
+              return (
+                <Pressable
+                  key={r}
+                  onPress={() => roleMutation.mutate(r)}
+                  disabled={roleMutation.isPending}
+                  style={({ pressed }) => [
+                    styles.roleBtn,
+                    isActive && styles.roleBtnActive,
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Caption style={[styles.roleBtnText, isActive && styles.roleBtnTextActive]}>
+                    {t(`profile.roles.${r}` as any)}
+                  </Caption>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </View>
+
       {/* Posts header */}
       <View style={styles.sectionHeader}>
         <Label style={styles.sectionLabel}>{t('profile.myPosts')}</Label>
@@ -463,6 +520,32 @@ const styles = StyleSheet.create({
   bioBtn: { paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: 8, borderWidth: 1, borderColor: colors.border },
   bioBtnPrimary: { paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: 8, backgroundColor: colors.accent, minWidth: 60, alignItems: 'center' },
   bioBtnPrimaryText: { color: '#fff', fontWeight: '600' },
+
+  // Role & Rank
+  roleSection: {
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  rankRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  rolePickerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  roleSectionLabel: { color: colors.textSecondary, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, width: 48 },
+  roleBtns: { flexDirection: 'row', gap: spacing.xs, flex: 1, flexWrap: 'wrap' },
+  roleBtn: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+  },
+  roleBtnActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accentLight,
+  },
+  roleBtnText: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  roleBtnTextActive: { color: colors.accent },
 
   // Posts
   sectionHeader: {

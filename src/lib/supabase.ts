@@ -91,7 +91,17 @@ export interface Profile {
   username: string;
   avatar_url: string | null;
   bio: string | null;
+  role: 'artisan' | 'collector' | 'enthusiast' | null;
+  post_count: number;
   created_at: string;
+}
+
+export interface RankTier {
+  id: number;
+  name: string;
+  min_posts: number;
+  color: string;
+  sort_order: number;
 }
 
 export interface PostLike {
@@ -106,7 +116,7 @@ export interface PostComment {
   user_id: string;
   content: string;
   created_at: string;
-  profiles?: Pick<Profile, 'username' | 'avatar_url'>;
+  profiles?: Pick<Profile, 'username' | 'avatar_url' | 'role' | 'post_count'>;
 }
 
 export interface Post {
@@ -126,5 +136,5 @@ export interface Post {
   blade_width_mm: number | null;
   handle_length_mm: number | null;
   extra_notes: string | null;
-  profiles?: Pick<Profile, 'username' | 'avatar_url'>;
+  profiles?: Pick<Profile, 'username' | 'avatar_url' | 'role' | 'post_count'>;
 }
